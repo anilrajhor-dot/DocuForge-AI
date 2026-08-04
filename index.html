@@ -321,6 +321,34 @@ body.dark .studio-tab.active{color:var(--pine);}
 .studio-page .tool-group{padding:0; display:flex; gap:8px; flex-wrap:wrap;}
 .studio-page .tool-btn{width:auto; padding:8px 14px;}
 
+/* ===== Reader ===== */
+.reader-page{display:none; flex-direction:column; height:calc(100vh - 57px);}
+.reader-page.active{display:flex;}
+.reader-toolbar{
+  display:flex; align-items:center; gap:6px; padding:8px 14px; background:var(--surface);
+  border-bottom:1px solid var(--line); flex-wrap:wrap; flex-shrink:0;
+}
+.reader-toolbar .sep{width:1px; height:20px; background:var(--line);}
+.reader-toolbar select{font-size:12.5px; padding:5px 8px; border:1px solid var(--line); border-radius:4px; background:var(--bg); color:var(--ink);}
+.reader-body{flex:1; overflow-y:auto; position:relative; display:flex; justify-content:center; padding:26px 16px 60px;}
+.reader-empty{color:var(--ink-soft); font-size:14px; margin-top:60px; text-align:center; width:100%;}
+.reader-pdf-view{display:flex; justify-content:center;}
+.reader-pdf-view canvas{box-shadow:0 2px 14px rgba(0,0,0,.22); background:#fff;}
+.reader-epub-view{max-width:680px; width:100%; font-size:17px; line-height:1.75;}
+.reader-epub-view h2{font-family:var(--font-display); margin-bottom:16px; font-size:22px;}
+.reader-epub-view img{max-width:100%; height:auto;}
+.reader-epub-view p{margin-bottom:1em;}
+.reader-body.theme-sepia{background:#f4ecd8;}
+.reader-body.theme-sepia .reader-epub-view{color:#5b4636;}
+.reader-body.theme-dark{background:#1a1a1a;}
+.reader-body.theme-dark .reader-epub-view{color:#ddd;}
+.reader-toc-panel{
+  position:absolute; top:8px; right:16px; background:var(--surface); border:1px solid var(--line); border-radius:6px;
+  box-shadow:var(--shadow); max-height:70vh; overflow-y:auto; z-index:20; display:flex; flex-direction:column; min-width:220px;
+}
+.toc-item{padding:10px 14px; text-align:left; background:transparent; border:none; border-bottom:1px solid var(--line); cursor:pointer; font-size:13px; color:var(--ink);}
+.toc-item:hover{background:var(--surface-2);}
+
 /* ===== Dashboard tiles ===== */
 .dashboard-grid{
   display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:12px; margin-bottom:20px;
@@ -398,6 +426,7 @@ body.dark .studio-tab.active{color:var(--pine);}
       <button class="studio-tab" data-studio="security"><span class="st-icon">🔐</span> Security Studio</button>
       <button class="studio-tab" data-studio="batch"><span class="st-icon">📂</span> Batch Studio</button>
       <button class="studio-tab" data-studio="settings"><span class="st-icon">⚙️</span> Settings</button>
+      <button class="studio-tab" data-studio="reader"><span class="st-icon">📖</span> Reader</button>
       <button class="studio-tab" data-studio="about"><span class="st-icon">ℹ️</span> About</button>
     </div>
 
@@ -460,6 +489,13 @@ body.dark .studio-tab.active{color:var(--pine);}
 <button class="tool-btn" disabled="" id="btnPdfToText"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h13"></path></svg> PDF → Text (.txt)</button>
 <button class="tool-btn" disabled="" id="btnPdfToHtml"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M8 3L4 12l4 9M16 3l4 9-4 9"></path></svg> PDF → HTML</button>
 <button class="tool-btn" disabled="" id="btnPdfToJson"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3a3 3 0 00-3 3v3a2 2 0 01-2 2 2 2 0 012 2v3a3 3 0 003 3M18 3a3 3 0 013 3v3a2 2 0 002 2 2 2 0 00-2 2v3a3 3 0 01-3 3"></path></svg> PDF → JSON</button>
+<button class="tool-btn" disabled id="btnPdfToXml"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M8 3L2 12l6 9M16 3l6 9-6 9M10 21l4-18"></path></svg> PDF → XML</button>
+<button class="tool-btn" disabled id="btnPdfToSvg"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M8 12h8M12 8v8"></path></svg> PDF → SVG…</button>
+<button class="tool-btn" disabled id="btnPdfToRtf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"></path><path d="M8 13h8M8 17h5"></path></svg> PDF → RTF</button>
+<button class="tool-btn" disabled id="btnPdfToOdt"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"></path><path d="M8 13h8M8 17h8"></path></svg> PDF → ODT</button>
+<button class="tool-btn" disabled id="btnPdfToOds"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="1" width="18" x="3" y="4"></rect><path d="M3 10h18M9 4v16"></path></svg> PDF → ODS</button>
+<button class="tool-btn" disabled id="btnPdfToOdp"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="13" rx="1" width="18" x="3" y="5"></rect><path d="M8 21h8"></path></svg> PDF → ODP</button>
+<button class="tool-btn" disabled id="btnPdfToEpub"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg> PDF → EPUB</button>
 <button class="tool-btn" id="btnFileToPdf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"></path><path d="M12 12v6m-3-3h6"></path></svg> Create PDF from file…</button>
 </div>
 </div>
@@ -501,6 +537,30 @@ body.dark .studio-tab.active{color:var(--pine);}
 <button class="tool-btn danger" id="btnClearAllData">Clear all local settings</button>
 </div>
 </div>
+    </div>
+
+    <div id="readerStudio" class="reader-page">
+      <div class="reader-toolbar">
+        <button class="btn ghost" id="readerOpenBtn" type="button">Open PDF or EPUB…</button>
+        <button class="btn ghost" id="readerUseCurrentBtn" type="button">Read current PDF</button>
+        <span class="sep"></span>
+        <button class="icon-btn" id="readerPrev" disabled aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <span id="readerPageIndicator" class="mono" style="font-size:12px;color:var(--ink-soft);min-width:110px;text-align:center;">–</span>
+        <button class="icon-btn" id="readerNext" disabled aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+        <span class="sep"></span>
+        <button class="icon-btn" id="readerZoomOut" aria-label="Zoom out">−</button>
+        <span id="readerZoomLevel" class="mono" style="font-size:12px;color:var(--ink-soft);min-width:44px;text-align:center;">100%</span>
+        <button class="icon-btn" id="readerZoomIn" aria-label="Zoom in">+</button>
+        <span class="sep"></span>
+        <select id="readerTheme"><option value="light">Light</option><option value="sepia">Sepia</option><option value="dark">Dark</option></select>
+        <button class="btn ghost" id="readerToc" type="button" style="display:none;">Contents</button>
+      </div>
+      <div id="readerBody" class="reader-body theme-light">
+        <div id="readerEmpty" class="reader-empty">Open a PDF or EPUB, or read the PDF currently loaded in the editor.</div>
+        <div id="readerPdfView" class="reader-pdf-view" style="display:none;"></div>
+        <div id="readerEpubView" class="reader-epub-view" style="display:none;"></div>
+        <div id="readerTocPanel" class="reader-toc-panel" style="display:none;"></div>
+      </div>
     </div>
 
     <div id="aboutStudio" class="studio-page">
@@ -648,6 +708,7 @@ function setToolsEnabled(on){
    'btnWatermark','btnPageNum','btnHeaderFooter','btnFillForm','btnFlattenForm','btnSign',
    'btnCompress','btnMetadata','btnUndo','btnRedo','btnReset','btnOcrPdf',
    'btnPdfToWord','btnPdfToPptx','btnPdfToExcel','btnPdfToCsv','btnPdfToText','btnPdfToHtml','btnPdfToJson','btnPdfToImages',
+   'btnPdfToXml','btnPdfToSvg','btnPdfToRtf','btnPdfToOdt','btnPdfToOds','btnPdfToOdp','btnPdfToEpub',
    'btnTranslatePdf','btnAnalyze','btnDupPages','btnChatPdf'].forEach(id=>{
     $(id).disabled = !on;
   });
@@ -2174,6 +2235,168 @@ async function buildPdfJson(){
   return JSON.stringify({ document: $('outName').value || 'document', pageCount: data.length, pages: data }, null, 2);
 }
 
+/* ---------- PDF → XML ---------- */
+async function buildPdfXml(){
+  const pages = await getPdfPagesTextItems();
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const pagesXml = pages.map(p => {
+    const lines = groupIntoLines(p.items).map(lineToText);
+    const linesXml = lines.map(l => `    <line>${esc(l)}</line>`).join('\n');
+    return `  <page number="${p.pageIndex + 1}">\n${linesXml}\n  </page>`;
+  }).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<document name="${esc($('outName').value || 'document')}">\n${pagesXml}\n</document>`;
+}
+
+/* ---------- PDF → SVG ----------
+   Each page is rasterized and wrapped in an <svg><image>. This is real,
+   valid SVG, but it's a raster image inside an SVG wrapper — not vector
+   paths, since converting a PDF's actual vector content to SVG paths
+   would need a full PDF-content-stream-to-SVG renderer that PDF.js
+   doesn't expose in this version. Said plainly rather than overclaiming
+   "vector export". */
+async function convertPdfToSvgZip(){
+  const pdf = await pdfjsLib.getDocument({ data: workingBytes.slice() }).promise;
+  const zip = new JSZip();
+  for(let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 2 });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width; canvas.height = viewport.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    const pngDataUrl = canvas.toDataURL('image/png');
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${viewport.width}" height="${viewport.height}" viewBox="0 0 ${viewport.width} ${viewport.height}"><image width="${viewport.width}" height="${viewport.height}" xlink:href="${pngDataUrl}"/></svg>`;
+    zip.file(`page_${String(i).padStart(3,'0')}.svg`, svg);
+  }
+  return await zip.generateAsync({ type:'blob' });
+}
+
+/* ---------- PDF → RTF ---------- */
+function escapeRtf(s){
+  return String(s).replace(/\\/g,'\\\\').replace(/\{/g,'\\{').replace(/\}/g,'\\}')
+    .replace(/[\u0080-\uffff]/g, c => '\\u' + c.charCodeAt(0) + '?');
+}
+async function buildPdfRtf(){
+  const pages = await getPdfPagesTextItems();
+  let body = '';
+  pages.forEach((p, idx) => {
+    if(idx > 0) body += '\\page\n';
+    groupIntoLines(p.items).map(lineToText).forEach(l => { body += escapeRtf(l) + '\\par\n'; });
+  });
+  return `{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Calibri;}}\\f0\\fs22\n${body}}`;
+}
+
+/* ---------- PDF → ODT / ODS / ODP (OpenDocument formats) ----------
+   Same hand-built-OOXML-style approach as docx/pptx, but for the
+   OpenDocument family: a zip with an uncompressed "mimetype" as the
+   first entry (required by the spec) plus a manifest and content.xml. */
+async function buildOdfZip(mimetype, contentXml){
+  const zip = new JSZip();
+  zip.file('mimetype', mimetype, { compression: 'STORE' });
+  zip.file('META-INF/manifest.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">
+<manifest:file-entry manifest:full-path="/" manifest:version="1.2" manifest:media-type="${mimetype}"/>
+<manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>
+</manifest:manifest>`);
+  zip.file('content.xml', contentXml);
+  return await zip.generateAsync({ type:'uint8array' });
+}
+async function buildPdfOdt(){
+  const pages = await getPdfPagesTextItems();
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let paras = '';
+  pages.forEach((p, idx) => {
+    if(idx > 0) paras += '<text:p/>\n';
+    groupIntoLines(p.items).map(lineToText).forEach(l => { paras += `<text:p>${esc(l)}</text:p>\n`; });
+  });
+  const contentXml = `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:version="1.2">
+<office:body><office:text>
+${paras}</office:text></office:body>
+</office:document-content>`;
+  return await buildOdfZip('application/vnd.oasis.opendocument.text', contentXml);
+}
+async function buildPdfOds(){
+  const { rows } = await collectPdfRows();
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const rowsXml = rows.map(r => {
+    const cells = r.map(c => `<table:table-cell office:value-type="string"><text:p>${esc(c)}</text:p></table:table-cell>`).join('');
+    return `<table:table-row>${cells}</table:table-row>`;
+  }).join('\n');
+  const contentXml = `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:version="1.2">
+<office:body><office:spreadsheet>
+<table:table table:name="Sheet1">
+${rowsXml}
+</table:table>
+</office:spreadsheet></office:body>
+</office:document-content>`;
+  return await buildOdfZip('application/vnd.oasis.opendocument.spreadsheet', contentXml);
+}
+async function buildPdfOdp(){
+  const pages = await getPdfPagesTextItems();
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const pagesXml = pages.map((p, i) => {
+    const lines = groupIntoLines(p.items).map(lineToText).filter(l => l.trim());
+    const paras = lines.map(l => `<text:p>${esc(l)}</text:p>`).join('') || '<text:p/>';
+    return `<draw:page draw:name="page${i+1}"><draw:frame draw:layer="layout"><draw:text-box>${paras}</draw:text-box></draw:frame></draw:page>`;
+  }).join('\n');
+  const contentXml = `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:version="1.2">
+<office:body><office:presentation>
+${pagesXml}
+</office:presentation></office:body>
+</office:document-content>`;
+  return await buildOdfZip('application/vnd.oasis.opendocument.presentation', contentXml);
+}
+
+/* ---------- PDF → EPUB ---------- */
+async function buildPdfEpub(){
+  const pages = await getPdfPagesTextItems();
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const title = esc($('outName').value || 'Document');
+  const zip = new JSZip();
+  zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
+  zip.file('META-INF/container.xml', `<?xml version="1.0" encoding="UTF-8"?>
+<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0">
+<rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>`);
+  const uid = 'urn:uuid:' + Date.now() + '-' + Math.floor(Math.random() * 1e9);
+  const manifestItems = pages.map((p,i) => `<item id="chap${i+1}" href="chap${i+1}.xhtml" media-type="application/xhtml+xml"/>`).join('\n');
+  const spineItems = pages.map((p,i) => `<itemref idref="chap${i+1}"/>`).join('\n');
+  zip.file('OEBPS/content.opf', `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="2.0">
+<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+<dc:title>${title}</dc:title>
+<dc:language>en</dc:language>
+<dc:identifier id="BookId">${uid}</dc:identifier>
+</metadata>
+<manifest>
+${manifestItems}
+<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+</manifest>
+<spine toc="ncx">
+${spineItems}
+</spine>
+</package>`);
+  const navPoints = pages.map((p,i) => `<navPoint id="np${i+1}" playOrder="${i+1}"><navLabel><text>Page ${i+1}</text></navLabel><content src="chap${i+1}.xhtml"/></navPoint>`).join('\n');
+  zip.file('OEBPS/toc.ncx', `<?xml version="1.0" encoding="UTF-8"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+<head><meta name="dtb:uid" content="${uid}"/></head>
+<docTitle><text>${title}</text></docTitle>
+<navMap>
+${navPoints}
+</navMap>
+</ncx>`);
+  pages.forEach((p, i) => {
+    const lines = groupIntoLines(p.items).map(lineToText);
+    const bodyHtml = lines.map(l => `<p>${esc(l) || '&#160;'}</p>`).join('\n');
+    zip.file(`OEBPS/chap${i+1}.xhtml`, `<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Page ${i+1}</title></head>
+<body>${bodyHtml}</body></html>`);
+  });
+  return await zip.generateAsync({ type:'uint8array' });
+}
+
 /* ---------- HTML → PDF ---------- */
 function extractHtmlBlocks(htmlString){
   const doc = new DOMParser().parseFromString(htmlString, 'text/html');
@@ -2330,6 +2553,142 @@ async function callAI(provider, apiKey, model, prompt){
     if(data.error) throw new Error(data.error.message || 'OpenAI API error.');
     return (data.choices?.[0]?.message?.content || '').trim();
   }
+}
+
+/* ---------- Reader (PDF + EPUB) ----------
+   A separate, dedicated reading view — distinct from the editor's
+   thumbnail/zoom-preview workflow, which is built for editing, not
+   reading. EPUB parsing is done by hand here (container.xml → OPF
+   manifest/spine → XHTML chapters), since there's no EPUB library
+   already loaded; images inside chapters are resolved from the zip and
+   swapped to blob URLs so they actually display. */
+let readerMode = null; // 'pdf' | 'epub'
+let readerPdfDoc = null;
+let readerPdfPageCount = 0;
+let readerPdfCurrentPage = 1;
+let readerPdfZoom = 1.3;
+let readerEpubChapters = [];
+let readerEpubIndex = 0;
+let readerFileKey = null;
+
+function readerReset(){
+  $('readerEmpty').style.display = 'block';
+  $('readerPdfView').style.display = 'none';
+  $('readerEpubView').style.display = 'none';
+  $('readerPrev').disabled = true; $('readerNext').disabled = true;
+  $('readerPageIndicator').textContent = '–';
+  $('readerToc').style.display = 'none';
+  $('readerTocPanel').style.display = 'none';
+  readerMode = null; readerFileKey = null;
+}
+function readerSaveProgress(){
+  if(!readerFileKey) return;
+  const pos = readerMode === 'pdf' ? readerPdfCurrentPage : readerEpubIndex;
+  try{ localStorage.setItem('pdfworkbench-reader-pos-' + readerFileKey, String(pos)); } catch{}
+}
+function readerLoadProgress(key){
+  try{ const v = localStorage.getItem('pdfworkbench-reader-pos-' + key); return v ? parseInt(v) : null; } catch{ return null; }
+}
+
+async function openReaderPdf(bytes, key){
+  readerReset();
+  readerMode = 'pdf';
+  readerFileKey = key || null;
+  $('readerEmpty').style.display = 'none';
+  $('readerPdfView').style.display = 'flex';
+  readerPdfDoc = await pdfjsLib.getDocument({ data: bytes.slice ? bytes.slice() : bytes }).promise;
+  readerPdfPageCount = readerPdfDoc.numPages;
+  const saved = readerFileKey ? readerLoadProgress(readerFileKey) : null;
+  readerPdfCurrentPage = (saved && saved >= 1 && saved <= readerPdfPageCount) ? saved : 1;
+  $('readerPrev').disabled = false; $('readerNext').disabled = false;
+  await renderReaderPdfPage();
+}
+async function renderReaderPdfPage(){
+  const page = await readerPdfDoc.getPage(readerPdfCurrentPage);
+  const viewport = page.getViewport({ scale: readerPdfZoom });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width; canvas.height = viewport.height;
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+  const container = $('readerPdfView');
+  container.innerHTML = '';
+  container.appendChild(canvas);
+  $('readerPageIndicator').textContent = `Page ${readerPdfCurrentPage} / ${readerPdfPageCount}`;
+  $('readerZoomLevel').textContent = Math.round((readerPdfZoom / 1.3) * 100) + '%';
+  readerSaveProgress();
+}
+
+async function resolveEpubImages(zip, dir, html){
+  const imgRe = /<img[^>]*\ssrc="([^"]+)"[^>]*>/g;
+  const srcs = new Set();
+  let mm;
+  while((mm = imgRe.exec(html))) srcs.add(mm[1]);
+  let out = html;
+  for(const src of srcs){
+    if(/^(https?:|data:)/.test(src)) continue;
+    const path = (dir + src).replace(/\.\.\//g, '').replace(/^\.\//, dir);
+    const zf = zip.file(path) || zip.file(decodeURIComponent(path)) || zip.file(src);
+    if(!zf) continue;
+    try{
+      const blob = await zf.async('blob');
+      const url = URL.createObjectURL(blob);
+      out = out.split(`src="${src}"`).join(`src="${url}"`);
+    } catch{}
+  }
+  return out;
+}
+async function openReaderEpub(file){
+  readerReset();
+  readerMode = 'epub';
+  readerFileKey = file.name + '_' + file.size;
+  $('readerEmpty').style.display = 'none';
+  $('readerEpubView').style.display = 'block';
+  const buf = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(buf);
+  const containerFile = zip.file('META-INF/container.xml');
+  if(!containerFile) throw new Error('Not a valid EPUB — missing container.xml.');
+  const containerXml = await containerFile.async('string');
+  const opfPathMatch = containerXml.match(/full-path="([^"]+)"/);
+  if(!opfPathMatch) throw new Error('Could not find the EPUB package file.');
+  const opfPath = opfPathMatch[1];
+  const opfDir = opfPath.includes('/') ? opfPath.slice(0, opfPath.lastIndexOf('/') + 1) : '';
+  const opfXml = await zip.file(opfPath).async('string');
+  const opfDoc = new DOMParser().parseFromString(opfXml, 'application/xml');
+  const manifestItems = {};
+  opfDoc.querySelectorAll('manifest > item').forEach(item => {
+    manifestItems[item.getAttribute('id')] = item.getAttribute('href');
+  });
+  const spineIds = Array.from(opfDoc.querySelectorAll('spine > itemref')).map(el => el.getAttribute('idref'));
+  readerEpubChapters = [];
+  for(const id of spineIds){
+    const href = manifestItems[id];
+    if(!href) continue;
+    const fullPath = opfDir + href;
+    const zf = zip.file(fullPath) || zip.file(decodeURIComponent(fullPath));
+    if(!zf) continue;
+    const xhtml = await zf.async('string');
+    const bodyMatch = xhtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    const titleMatch = xhtml.match(/<title>([\s\S]*?)<\/title>/i);
+    let chapterHtml = bodyMatch ? bodyMatch[1] : xhtml;
+    chapterHtml = await resolveEpubImages(zip, opfDir, chapterHtml);
+    readerEpubChapters.push({
+      title: (titleMatch ? titleMatch[1].trim() : '') || `Chapter ${readerEpubChapters.length + 1}`,
+      html: chapterHtml,
+    });
+  }
+  if(!readerEpubChapters.length) throw new Error('No readable chapters found in this EPUB.');
+  const saved = readerLoadProgress(readerFileKey);
+  readerEpubIndex = (saved !== null && saved >= 0 && saved < readerEpubChapters.length) ? saved : 0;
+  $('readerPrev').disabled = false; $('readerNext').disabled = false;
+  $('readerToc').style.display = readerEpubChapters.length > 1 ? 'inline-flex' : 'none';
+  renderReaderEpubChapter();
+}
+function renderReaderEpubChapter(){
+  const ch = readerEpubChapters[readerEpubIndex];
+  if(!ch) return;
+  $('readerEpubView').innerHTML = `<h2>${ch.title}</h2>${ch.html}`;
+  $('readerBody').scrollTop = 0;
+  $('readerPageIndicator').textContent = `Chapter ${readerEpubIndex + 1} / ${readerEpubChapters.length}`;
+  readerSaveProgress();
 }
 
 /* ---------- Zoom modal ---------- */
@@ -2622,6 +2981,83 @@ $('btnPdfToJson').addEventListener('click', async () => {
     const json = await buildPdfJson();
     downloadBlob(new Blob([json], { type:'application/json' }), ($('outName').value || 'document') + '.json');
     setStatus('Exported JSON.');
+  } finally { showProgress(null); }
+});
+
+$('btnPdfToXml').addEventListener('click', async () => {
+  setStatus('Building XML…'); showProgress(20);
+  try{
+    const xml = await buildPdfXml();
+    downloadBlob(new Blob([xml], { type:'application/xml' }), ($('outName').value || 'document') + '.xml');
+    setStatus('Exported XML.');
+  } finally { showProgress(null); }
+});
+
+$('btnPdfToSvg').addEventListener('click', async () => {
+  setStatus('Rendering pages as SVG…'); showProgress(20);
+  try{
+    const blob = await convertPdfToSvgZip();
+    downloadBlob(blob, ($('outName').value || 'document') + '_svg.zip');
+    setStatus('Exported SVG pages.');
+  } finally { showProgress(null); }
+});
+
+$('btnPdfToRtf').addEventListener('click', async () => {
+  setStatus('Building RTF…'); showProgress(20);
+  try{
+    const pages = await getPdfPagesTextItems();
+    const hasText = pages.some(p => p.items.some(it => it.str.trim().length));
+    if(!hasText){ toast('No extractable text layer — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    const rtf = await buildPdfRtf();
+    downloadBlob(new Blob([rtf], { type:'application/rtf' }), ($('outName').value || 'document') + '.rtf');
+    setStatus('Exported RTF.');
+  } finally { showProgress(null); }
+});
+
+$('btnPdfToOdt').addEventListener('click', async () => {
+  setStatus('Building ODT…'); showProgress(20);
+  try{
+    const pages = await getPdfPagesTextItems();
+    const hasText = pages.some(p => p.items.some(it => it.str.trim().length));
+    if(!hasText){ toast('No extractable text layer — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    const bytes = await buildPdfOdt();
+    downloadBlob(new Blob([bytes], { type:'application/vnd.oasis.opendocument.text' }), ($('outName').value || 'document') + '.odt');
+    setStatus('Exported ODT.');
+  } finally { showProgress(null); }
+});
+
+$('btnPdfToOds').addEventListener('click', async () => {
+  setStatus('Building ODS…'); showProgress(20);
+  try{
+    const { hasText } = await collectPdfRows();
+    if(!hasText){ toast('No extractable text layer — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    const bytes = await buildPdfOds();
+    downloadBlob(new Blob([bytes], { type:'application/vnd.oasis.opendocument.spreadsheet' }), ($('outName').value || 'document') + '.ods');
+    setStatus('Exported ODS.');
+  } finally { showProgress(null); }
+});
+
+$('btnPdfToOdp').addEventListener('click', async () => {
+  setStatus('Building ODP…'); showProgress(20);
+  try{
+    const pages = await getPdfPagesTextItems();
+    const hasText = pages.some(p => p.items.some(it => it.str.trim().length));
+    if(!hasText){ toast('No extractable text layer — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    const bytes = await buildPdfOdp();
+    downloadBlob(new Blob([bytes], { type:'application/vnd.oasis.opendocument.presentation' }), ($('outName').value || 'document') + '.odp');
+    setStatus('Exported ODP.');
+  } finally { showProgress(null); }
+});
+
+$('btnPdfToEpub').addEventListener('click', async () => {
+  setStatus('Building EPUB…'); showProgress(20);
+  try{
+    const pages = await getPdfPagesTextItems();
+    const hasText = pages.some(p => p.items.some(it => it.str.trim().length));
+    if(!hasText){ toast('No extractable text layer — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    const bytes = await buildPdfEpub();
+    downloadBlob(new Blob([bytes], { type:'application/epub+zip' }), ($('outName').value || 'document') + '.epub');
+    setStatus('Exported EPUB.');
   } finally { showProgress(null); }
 });
 
@@ -3147,6 +3583,52 @@ $('btnQrReader').addEventListener('click', () => {
   });
 });
 
+/* ---------- Reader controls ---------- */
+$('readerOpenBtn').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.pdf,.epub';
+  input.addEventListener('change', async () => {
+    const file = input.files[0];
+    if(!file) return;
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    try{
+      if(ext === 'epub') await openReaderEpub(file);
+      else await openReaderPdf(await file.arrayBuffer(), file.name + '_' + file.size);
+    } catch(e){ console.error(e); toast('Could not open that file for reading: ' + e.message, true); }
+  });
+  input.click();
+});
+$('readerUseCurrentBtn').addEventListener('click', async () => {
+  if(!workingBytes){ toast('No PDF is currently open in the editor.', true); return; }
+  try{ await openReaderPdf(workingBytes, ($('outName').value || 'document') + '_' + workingBytes.byteLength); }
+  catch(e){ console.error(e); toast('Could not open the current PDF for reading.', true); }
+});
+$('readerPrev').addEventListener('click', () => {
+  if(readerMode === 'pdf'){ if(readerPdfCurrentPage > 1){ readerPdfCurrentPage--; renderReaderPdfPage(); } }
+  else if(readerMode === 'epub'){ if(readerEpubIndex > 0){ readerEpubIndex--; renderReaderEpubChapter(); } }
+});
+$('readerNext').addEventListener('click', () => {
+  if(readerMode === 'pdf'){ if(readerPdfCurrentPage < readerPdfPageCount){ readerPdfCurrentPage++; renderReaderPdfPage(); } }
+  else if(readerMode === 'epub'){ if(readerEpubIndex < readerEpubChapters.length - 1){ readerEpubIndex++; renderReaderEpubChapter(); } }
+});
+$('readerZoomIn').addEventListener('click', () => { if(readerMode === 'pdf'){ readerPdfZoom = Math.min(readerPdfZoom + 0.2, 3); renderReaderPdfPage(); } });
+$('readerZoomOut').addEventListener('click', () => { if(readerMode === 'pdf'){ readerPdfZoom = Math.max(readerPdfZoom - 0.2, 0.6); renderReaderPdfPage(); } });
+$('readerTheme').addEventListener('change', (e) => {
+  $('readerBody').className = 'reader-body theme-' + e.target.value;
+  try{ localStorage.setItem('pdfworkbench-reader-theme', e.target.value); } catch{}
+});
+$('readerToc').addEventListener('click', () => {
+  const panel = $('readerTocPanel');
+  if(panel.style.display === 'flex'){ panel.style.display = 'none'; return; }
+  panel.innerHTML = readerEpubChapters.map((c,i) => `<button class="toc-item" data-i="${i}" type="button">${c.title}</button>`).join('');
+  panel.style.display = 'flex';
+  panel.querySelectorAll('.toc-item').forEach(b => b.addEventListener('click', () => {
+    readerEpubIndex = parseInt(b.dataset.i);
+    renderReaderEpubChapter();
+    panel.style.display = 'none';
+  }));
+});
+
 $('btnUndo').addEventListener('click', undo);
 $('btnRedo').addEventListener('click', redo);
 $('btnReset').addEventListener('click', () => {
@@ -3221,7 +3703,8 @@ function setStudio(name){
   document.querySelectorAll('.ribbon-panel').forEach(p => p.classList.toggle('active', p.dataset.studioPanel === name));
   $('settingsStudio').classList.toggle('active', name === 'settings');
   $('aboutStudio').classList.toggle('active', name === 'about');
-  $('workspaceLayout').style.display = (name === 'settings' || name === 'about') ? 'none' : 'flex';
+  $('readerStudio').classList.toggle('active', name === 'reader');
+  $('workspaceLayout').style.display = (name === 'settings' || name === 'about' || name === 'reader') ? 'none' : 'flex';
   updateDashboardTilesVisibility();
 }
 document.querySelectorAll('.studio-tab').forEach(t => {
@@ -3262,6 +3745,26 @@ function computeStats(data){
   const max = n ? Math.max(...data) : 0;
   return { n, sum, avg, min, max };
 }
+async function buildChartPdf(dataUrl, title, s){
+  const doc = await PDFDocument.create();
+  const pngBytes = await (await fetch(dataUrl)).arrayBuffer();
+  const img = await doc.embedPng(pngBytes);
+  const pageWidth = 595.28, pageHeight = 841.89, margin = 40;
+  const page = doc.addPage([pageWidth, pageHeight]);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  let y = pageHeight - margin;
+  page.drawText(title, { x: margin, y, size: 16, font: fontBold, color: rgb(0.043,0.231,0.204) });
+  y -= 34;
+  const maxImgWidth = pageWidth - margin * 2;
+  const imgWidth = Math.min(maxImgWidth, img.width);
+  const imgHeight = imgWidth * (img.height / img.width);
+  page.drawImage(img, { x: margin, y: y - imgHeight, width: imgWidth, height: imgHeight });
+  y -= imgHeight + 24;
+  const statsLine = `Count: ${s.n}    Sum: ${s.sum.toFixed(2)}    Average: ${s.avg.toFixed(2)}    Min: ${s.min.toFixed(2)}    Max: ${s.max.toFixed(2)}`;
+  page.drawText(statsLine, { x: margin, y, size: 10, font, color: rgb(0.2,0.2,0.2) });
+  return await doc.save();
+}
 function showChartResult(labels, data, type, seriesLabel){
   const s = computeStats(data);
   const fmt = v => Number(v.toFixed(2)).toLocaleString();
@@ -3274,7 +3777,11 @@ function showChartResult(labels, data, type, seriesLabel){
       <div><div class="mono" style="font-weight:600;font-size:13px;">${fmt(s.min)}</div>Min</div>
       <div><div class="mono" style="font-weight:600;font-size:13px;">${fmt(s.max)}</div>Max</div>
     </div>
-    <button class="btn ghost" id="chartPng" type="button" style="align-self:flex-start;">Download chart as PNG</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn ghost" id="chartPng" type="button">Download chart as PNG</button>
+      <button class="btn ghost" id="chartPdf" type="button">Download chart as PDF</button>
+      <button class="btn ghost" id="chartCsv" type="button">Download data as CSV</button>
+    </div>
   `, async () => {});
   $('modalConfirm').style.display = 'none';
   $('modalCancel').textContent = 'Close';
@@ -3288,6 +3795,15 @@ function showChartResult(labels, data, type, seriesLabel){
     });
     document.getElementById('chartPng').addEventListener('click', () => {
       downloadBlob(dataUrlToBlob(document.getElementById('chartCanvas').toDataURL('image/png')), 'chart.png');
+    });
+    document.getElementById('chartPdf').addEventListener('click', async () => {
+      const dataUrl = document.getElementById('chartCanvas').toDataURL('image/png');
+      const bytes = await buildChartPdf(dataUrl, seriesLabel || 'Chart', s);
+      downloadBlob(new Blob([bytes], { type:'application/pdf' }), 'chart.pdf');
+    });
+    document.getElementById('chartCsv').addEventListener('click', () => {
+      const rows = [[  'Label', seriesLabel || 'Value' ], ...labels.map((l,i) => [l, data[i]])];
+      downloadBlob(new Blob([rows.map(r => r.map(toCsvValue).join(',')).join('\n')], {type:'text/csv'}), 'chart_data.csv');
     });
   }, 0);
 }
@@ -3346,6 +3862,10 @@ $('btnClearAllData').addEventListener('click', () => {
 });
 
 /* ---------- Init ---------- */
+try{
+  const savedReaderTheme = localStorage.getItem('pdfworkbench-reader-theme');
+  if(savedReaderTheme){ $('readerTheme').value = savedReaderTheme; $('readerBody').className = 'reader-body theme-' + savedReaderTheme; }
+} catch{}
 setStudio('dashboard');
 setToolsEnabled(false);
 </script>
