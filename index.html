@@ -2492,7 +2492,7 @@ async function loadEncryptLib(){
   const savedPDFLib = window.PDFLib;
   await new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = 'https://unpkg.com/pdf-lib-plus-encrypt@1.1.0/dist/pdf-lib.min.js';
+    script.src = 'https://unpkg.com/pdf-lib-plus-encrypt@1.1.0/dist/pdf-lib-plus-encrypt.min.js';
     script.onload = () => resolve();
     script.onerror = () => reject(new Error('Could not load the encryption library — check your internet connection.'));
     document.head.appendChild(script);
@@ -5505,21 +5505,37 @@ function showChartResult(labels, data, type, seriesLabel){
 function analyzeColumn(rows, colIdx){
   const body = rows.slice(1);
   const samples = [];
-  let numericCount = 0, nonEmptyCount = 0;
-  for(const r of body){
+  const numericVals = [];
+  let numericCount = 0, nonEmptyCount = 0, nonzeroCount = 0;
+  for(const r of body.slice(0, 60)){
     const v = r[colIdx];
     if(v === undefined || v === '') continue;
     nonEmptyCount++;
     if(samples.length < 3) samples.push(String(v));
-    if(typeof v === 'number' || (v !== '' && !isNaN(parseFloat(v)) && isFinite(v))) numericCount++;
+    const fv = parseFloat(v);
+    if(typeof v === 'number' || (v !== '' && !isNaN(fv) && isFinite(v))){
+      numericCount++;
+      numericVals.push(fv);
+      if(fv !== 0) nonzeroCount++;
+    }
   }
-  return { samples, pctNumeric: nonEmptyCount ? Math.round((numericCount / nonEmptyCount) * 100) : 0 };
+  const pctNumeric = nonEmptyCount ? Math.round((numericCount / nonEmptyCount) * 100) : 0;
+  const pctNonzero = nonEmptyCount ? Math.round((nonzeroCount / nonEmptyCount) * 100) : 0;
+  let isSequential = false;
+  if(numericVals.length > 5){
+    const diffs = [];
+    for(let i = 1; i < numericVals.length; i++) diffs.push(numericVals[i] - numericVals[i-1]);
+    const avgDiff = diffs.reduce((a,b) => a+b, 0) / diffs.length;
+    const constSteps = diffs.filter(d => Math.abs(d - avgDiff) < 0.01).length;
+    isSequential = (constSteps / diffs.length) > 0.9 && avgDiff !== 0;
+  }
+  return { samples, pctNumeric, pctNonzero, isSequential };
 }
 $('btnExcelChart').addEventListener('click', () => {
   openModal('Excel / CSV → Chart', `
     <div class="field"><label>Spreadsheet file</label><input type="file" id="chartFile" accept=".xlsx,.xls,.csv"></div>
     <div id="chartColumnsArea"></div>
-    <p class="hint">Uses the first sheet. Columns marked 🔢 look numeric — good Y-axis candidates. Sample values are shown so you can tell columns apart before picking.</p>
+    <p class="hint">Uses the first sheet. Columns marked 🔢 look numeric and useful; ⚠️ marks a row-number-style column — a poor choice for either axis. Sample values are shown so you can tell columns apart before picking.</p>
   `, async () => {
     const rows = window.__chartRows;
     if(!rows){ toast('Choose a spreadsheet file first.', true); return; }
@@ -5531,6 +5547,11 @@ $('btnExcelChart').addEventListener('click', () => {
     const rawData = body.map(r => { const v = parseFloat(r[yIdx]); return isNaN(v) ? null : v; });
     const validCount = rawData.filter(v => v !== null).length;
     if(!labels.length){ toast('No data rows found.', true); return; }
+    const colInfo = window.__chartColInfo;
+    if(colInfo && colInfo[yIdx] && colInfo[yIdx].isSequential){
+      toast('That Y-axis column looks like a row number/ID (values just count upward) rather than real data — the chart will just be a straight ramp. Pick a column with actual varying values instead.', true);
+      return;
+    }
     if(validCount === 0){
       toast('That Y-axis column doesn\u2019t contain usable numbers for every row — pick a column marked 🔢 in the list instead.', true);
       return;
@@ -5563,17 +5584,26 @@ $('btnExcelChart').addEventListener('click', () => {
         window.__chartRows = rows;
         const headers = rows[0];
         const colInfo = headers.map((h, i) => analyzeColumn(rows, i));
-        let bestYIdx = headers.length - 1, bestPct = -1;
-        colInfo.forEach((info, i) => { if(info.pctNumeric > bestPct){ bestPct = info.pctNumeric; bestYIdx = i; } });
+        window.__chartColInfo = colInfo;
+        // Y default: prefer numeric, non-sequential, high-nonzero-density columns
+        let bestYIdx = headers.length - 1, bestYScore = -Infinity;
+        colInfo.forEach((info, i) => {
+          const score = info.pctNumeric + info.pctNonzero - (info.isSequential ? 1000 : 0);
+          if(score > bestYScore){ bestYScore = score; bestYIdx = i; }
+        });
+        // X default: prefer the first clearly non-numeric (categorical) column
+        let bestXIdx = 0;
+        const catIdx = colInfo.findIndex(info => info.pctNumeric < 50);
+        if(catIdx >= 0) bestXIdx = catIdx;
         const optLabel = (h, i) => {
           const info = colInfo[i];
-          const marker = info.pctNumeric >= 70 ? '\ud83d\udd22 ' : '';
+          const marker = info.isSequential ? '\u26a0\ufe0f ' : (info.pctNumeric >= 70 ? '\ud83d\udd22 ' : '');
           const sample = info.samples.length ? ` \u2014 e.g. ${info.samples.join(', ')}` : '';
           return `${marker}${String(h)}${sample}`;
         };
         document.getElementById('chartColumnsArea').innerHTML = `
           <div class="field row">
-            <div><label>X-axis (labels)</label><select id="chartX">${headers.map((h,i) => `<option value="${i}">${escapeXml(optLabel(h,i))}</option>`).join('')}</select></div>
+            <div><label>X-axis (labels)</label><select id="chartX">${headers.map((h,i) => `<option value="${i}" ${i === bestXIdx ? 'selected' : ''}>${escapeXml(optLabel(h,i))}</option>`).join('')}</select></div>
             <div><label>Y-axis (values)</label><select id="chartY">${headers.map((h,i) => `<option value="${i}" ${i === bestYIdx ? 'selected' : ''}>${escapeXml(optLabel(h,i))}</option>`).join('')}</select></div>
           </div>
           <div class="field"><label>Chart type</label><select id="chartType"><option value="bar">Bar</option><option value="line">Line</option><option value="pie">Pie</option></select></div>
