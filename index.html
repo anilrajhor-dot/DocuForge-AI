@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>PDF Workbench — Core PDF Toolkit</title>
+<meta name="description" content="Merge, split, rotate, reorder and edit PDFs entirely in your browser. Nothing is ever uploaded.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%23113B34%22/><text x=%2250%22 y=%2266%22 font-size=%2252%22 text-anchor=%22middle%22 fill=%22%23F2A65A%22 font-family=%22Georgia%22>P</text></svg>">
+<link rel="manifest" href="data:application/manifest+json,{%22name%22:%22PDF%20Workbench%22,%22short_name%22:%22PDF%20Workbench%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23F6F5F1%22,%22theme_color%22:%22%23113B34%22}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+<style>
+/* ============ Design tokens ============
+   Concept: a document workshop / light table. Pages are physical objects
+   being arranged on a table, not app "cards". Ink-navy-green surfaces,
+   warm amber accent for actions, mono type for anything numeric (page
+   counts, file sizes, positions) to read like index-tab labels.
+*/
+:root{
+  --bg:#F6F5F1;
+  --surface:#FFFFFF;
+  --surface-2:#EFEDE6;
+  --ink:#16231F;
+  --ink-soft:#4B5750;
+  --line:#DEDACE;
+  --accent:#B65C1F;
+  --accent-ink:#FFFFFF;
+  --pine:#113B34;
+  --pine-soft:#1B4F45;
+  --danger:#A3341E;
+  --focus:#1B4F45;
+  --radius:3px;
+  --shadow:0 1px 2px rgba(22,35,31,.08), 0 6px 20px rgba(22,35,31,.06);
+  --font-display:'Source Serif 4', Georgia, serif;
+  --font-body:'Inter', system-ui, sans-serif;
+  --font-mono:'JetBrains Mono', ui-monospace, monospace;
+}
+body.dark{
+  --bg:#12181A;
+  --surface:#1B2225;
+  --surface-2:#222B2E;
+  --ink:#EDEAE2;
+  --ink-soft:#A9B2AC;
+  --line:#333E40;
+  --accent:#E08A45;
+  --accent-ink:#12181A;
+  --pine:#7FBFA8;
+  --pine-soft:#5F9E8A;
+  --danger:#E2694F;
+  --focus:#7FBFA8;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-body);
+  font-size:14px; line-height:1.5; transition:background .2s,color .2s;
+}
+::selection{background:var(--accent);color:var(--accent-ink);}
+button{font-family:inherit;}
+:focus-visible{outline:2px solid var(--focus); outline-offset:2px;}
+h1,h2,h3{font-family:var(--font-display); margin:0; font-weight:600;}
+.mono{font-family:var(--font-mono);}
+
+/* Header */
+header{
+  display:flex; align-items:center; gap:14px; padding:12px 20px;
+  background:var(--pine); color:#F4F2EA; position:sticky; top:0; z-index:40;
+  box-shadow:var(--shadow);
+}
+header .brand{display:flex; align-items:baseline; gap:10px;}
+header h1{font-size:19px; color:#F4F2EA; letter-spacing:.2px;}
+header .tag{font-size:11px; color:#C7D6CF; font-family:var(--font-mono);}
+.privacy-pill{
+  margin-left:auto; display:flex; align-items:center; gap:6px; font-size:11.5px;
+  color:#C7D6CF; padding:5px 10px; border:1px solid rgba(244,242,234,.25); border-radius:100px;
+}
+.privacy-pill svg{width:13px;height:13px;flex-shrink:0;}
+.icon-btn{
+  background:transparent; border:1px solid rgba(244,242,234,.3); color:#F4F2EA;
+  width:32px; height:32px; border-radius:var(--radius); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.icon-btn:hover{background:rgba(244,242,234,.12);}
+
+/* Layout */
+.layout{display:flex; min-height:calc(100vh - 57px);}
+aside{
+  width:240px; flex-shrink:0; background:var(--surface); border-right:1px solid var(--line);
+  padding:16px 0; overflow-y:auto;
+}
+.tool-group{padding:0 14px 16px;}
+.tool-group h2{
+  font-size:10.5px; text-transform:uppercase; letter-spacing:1px; color:var(--ink-soft);
+  font-family:var(--font-mono); font-weight:600; margin-bottom:8px; padding:0 4px;
+}
+.tool-btn{
+  width:100%; display:flex; align-items:center; gap:9px; padding:8px 9px; margin-bottom:3px;
+  background:transparent; border:1px solid transparent; border-radius:var(--radius);
+  color:var(--ink); font-size:13px; cursor:pointer; text-align:left;
+}
+.tool-btn:hover{background:var(--surface-2);}
+.tool-btn:disabled{opacity:.38; cursor:not-allowed;}
+.tool-btn:disabled:hover{background:transparent;}
+.tool-btn svg{width:16px;height:16px; flex-shrink:0; color:var(--ink-soft);}
+.tool-btn.danger:hover{background:rgba(163,52,30,.08); color:var(--danger);}
+.tool-btn.danger:hover svg{color:var(--danger);}
+kbd{
+  margin-left:auto; font-family:var(--font-mono); font-size:10px; color:var(--ink-soft);
+  background:var(--surface-2); border:1px solid var(--line); border-radius:3px; padding:1px 5px;
+}
+
+main{flex:1; min-width:0; padding:18px 22px 40px; position:relative;}
+
+/* Toolbar */
+.toolbar{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px;
+  padding:10px 12px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+}
+.toolbar .sep{width:1px; height:20px; background:var(--line);}
+.toolbar input[type=text], .toolbar input[type=number]{
+  font-family:var(--font-mono); font-size:12.5px; border:1px solid var(--line); border-radius:var(--radius);
+  padding:5px 8px; width:80px; background:var(--bg); color:var(--ink);
+}
+.file-stat{font-family:var(--font-mono); font-size:12px; color:var(--ink-soft); white-space:nowrap;}
+.btn{
+  border:1px solid var(--line); background:var(--surface); color:var(--ink); padding:6px 12px;
+  border-radius:var(--radius); font-size:12.5px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;
+}
+.btn:hover{border-color:var(--ink-soft);}
+.btn:disabled{opacity:.4; cursor:not-allowed;}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:600;}
+.btn.primary:hover{filter:brightness(1.05);}
+.btn.ghost{background:transparent;}
+.btn svg{width:14px;height:14px;}
+
+/* Dropzone */
+.dropzone{
+  border:2px dashed var(--line); border-radius:6px; padding:60px 20px; text-align:center;
+  color:var(--ink-soft); background:var(--surface); cursor:pointer; transition:border-color .15s, background .15s;
+}
+.dropzone.drag{border-color:var(--accent); background:var(--surface-2);}
+.dropzone h2{font-size:20px; color:var(--ink); margin-bottom:6px;}
+.dropzone p{margin:4px 0 18px; font-size:13px;}
+.dropzone .stamp{
+  display:inline-block; font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px;
+  color:var(--pine); border:1.5px solid var(--pine); padding:4px 10px; border-radius:3px; transform:rotate(-2deg);
+  margin-top:20px;
+}
+body.dark .dropzone .stamp{color:var(--pine);}
+
+/* Page grid */
+#grid{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(148px,1fr)); gap:16px;
+}
+.page-card{
+  background:var(--surface); border:1px solid var(--line); border-radius:4px; overflow:hidden;
+  cursor:grab; position:relative; box-shadow:var(--shadow);
+}
+.page-card.sel{outline:2px solid var(--accent); outline-offset:-1px;}
+.page-card .thumb-wrap{
+  background:var(--surface-2); display:flex; align-items:center; justify-content:center; padding:8px;
+  min-height:120px;
+}
+.page-card canvas{max-width:100%; box-shadow:0 1px 4px rgba(0,0,0,.25); background:#fff;}
+.page-card .bar{
+  display:flex; align-items:center; justify-content:space-between; padding:6px 8px;
+  border-top:1px solid var(--line); font-family:var(--font-mono); font-size:11px; color:var(--ink-soft);
+}
+.page-card .ctrls{display:flex; gap:2px;}
+.page-card .ctrls button{
+  width:22px; height:22px; border:none; background:transparent; color:var(--ink-soft); cursor:pointer;
+  border-radius:3px; display:flex; align-items:center; justify-content:center;
+}
+.page-card .ctrls button:hover{background:var(--surface-2); color:var(--ink);}
+.page-card .ctrls svg{width:13px;height:13px;}
+.page-card input[type=checkbox]{position:absolute; top:6px; left:6px; width:15px; height:15px; accent-color:var(--accent);}
+.page-card.sortable-ghost{opacity:.35;}
+
+/* Status bar */
+.statusbar{
+  position:fixed; left:240px; right:0; bottom:0; background:var(--surface); border-top:1px solid var(--line);
+  padding:8px 18px; font-size:12px; color:var(--ink-soft); display:flex; align-items:center; gap:14px; z-index:30;
+}
+.statusbar .msg{flex:1;}
+.progress-track{width:140px; height:5px; background:var(--surface-2); border-radius:3px; overflow:hidden; display:none;}
+.progress-track.show{display:block;}
+.progress-fill{height:100%; width:0%; background:var(--pine); transition:width .15s;}
+
+/* Modal */
+.modal-backdrop{
+  position:fixed; inset:0; background:rgba(18,24,26,.5); display:none; align-items:center; justify-content:center; z-index:100; padding:20px;
+}
+.modal-backdrop.show{display:flex;}
+.modal{
+  background:var(--surface); border-radius:6px; width:100%; max-width:440px; box-shadow:var(--shadow);
+  border:1px solid var(--line); max-height:90vh; overflow-y:auto;
+}
+.modal-head{padding:16px 18px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;}
+.modal-head h3{font-size:16px;}
+.modal-body{padding:16px 18px; display:flex; flex-direction:column; gap:12px;}
+.modal-foot{padding:14px 18px; border-top:1px solid var(--line); display:flex; justify-content:flex-end; gap:8px;}
+.field label{display:block; font-size:12px; font-weight:600; margin-bottom:5px; color:var(--ink-soft);}
+.field input[type=text], .field input[type=number], .field select, .field textarea{
+  width:100%; padding:8px 9px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); color:var(--ink); font-size:13px;
+}
+.field .row{display:flex; gap:10px;}
+.field .row > *{flex:1;}
+.radio-row{display:flex; gap:14px; font-size:13px;}
+.radio-row label{display:flex; align-items:center; gap:6px; font-weight:400; margin:0;}
+.hint{font-size:11.5px; color:var(--ink-soft); line-height:1.5;}
+
+/* Zoom modal */
+#zoomModal .modal{max-width:min(90vw, 700px);}
+#zoomCanvasWrap{display:flex; justify-content:center; background:var(--surface-2); padding:16px; border-radius:4px;}
+#zoomCanvasWrap canvas{max-width:100%; box-shadow:0 2px 10px rgba(0,0,0,.3);}
+
+.toast-wrap{position:fixed; top:70px; right:20px; display:flex; flex-direction:column; gap:8px; z-index:200;}
+.toast{
+  background:var(--pine); color:#F4F2EA; padding:10px 14px; border-radius:4px; font-size:13px; box-shadow:var(--shadow);
+  max-width:320px; animation:slidein .15s ease-out;
+}
+.toast.err{background:var(--danger);}
+@keyframes slidein{from{transform:translateX(20px);opacity:0;} to{transform:translateX(0);opacity:1;}}
+
+.empty-hide{display:none !important;}
+.sr-only{position:absolute; width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
+
+@media (max-width:820px){
+  aside{position:fixed; left:-260px; top:57px; bottom:0; z-index:50; transition:left .2s; box-shadow:var(--shadow);}
+  aside.open{left:0;}
+  .statusbar{left:0;}
+  main{padding:14px;}
+  .menu-toggle{display:flex !important;}
+}
+.menu-toggle{display:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Toggle tools menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div class="brand">
+    <h1>PDF Workbench</h1>
+    <span class="tag">core toolkit</span>
+  </div>
+  <div class="privacy-pill">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg>
+    Your documents never leave this device
+  </div>
+  <button class="icon-btn" id="darkToggle" aria-label="Toggle dark mode">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg>
+  </button>
+</header>
+
+<div class="layout">
+  <aside id="sidebar">
+    <div class="tool-group">
+      <h2>Add pages</h2>
+      <button class="tool-btn" id="btnOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg> Open / Merge PDFs</button>
+      <button class="tool-btn" id="btnInsert" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg> Insert PDF at page…</button>
+    </div>
+    <div class="tool-group">
+      <h2>Arrange</h2>
+      <button class="tool-btn" id="btnDuplicateSel" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="1"/><path d="M4 16V5a1 1 0 011-1h11"/></svg> Duplicate selected</button>
+      <button class="tool-btn" id="btnRotateSel" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M5 15a9 9 0 0014 4M19 9A9 9 0 005 5"/></svg> Rotate selected 90°</button>
+      <button class="tool-btn" id="btnReverse" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h13M7 12h13M7 17h13M3 7v10l3-3M3 7l3 3"/></svg> Reverse page order</button>
+      <button class="tool-btn danger" id="btnDeleteSel" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg> Delete selected</button>
+    </div>
+    <div class="tool-group">
+      <h2>Extract &amp; split</h2>
+      <button class="tool-btn" id="btnExtract" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 12h6"/></svg> Extract selected → new PDF</button>
+      <button class="tool-btn" id="btnSplit" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="16" rx="1"/><rect x="14" y="4" width="7" height="16" rx="1"/></svg> Split into files…</button>
+    </div>
+    <div class="tool-group">
+      <h2>Enhance</h2>
+      <button class="tool-btn" id="btnWatermark" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 16l8-8"/></svg> Add watermark…</button>
+      <button class="tool-btn" id="btnPageNum" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><text x="12" y="16" font-size="8" text-anchor="middle" fill="currentColor" stroke="none">12</text></svg> Add page numbers…</button>
+      <button class="tool-btn" id="btnCompress" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4v4H4M16 4v4h4M8 20v-4H4M16 20v-4h4"/></svg> Compress</button>
+      <button class="tool-btn" id="btnMetadata" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h7"/></svg> Edit metadata…</button>
+    </div>
+    <div class="tool-group">
+      <h2>OCR &amp; text</h2>
+      <button class="tool-btn" id="btnOcrImage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 20l4-4 4 4M9 10a2 2 0 100-4 2 2 0 000 4z"/></svg> Extract text from image…</button>
+      <button class="tool-btn" id="btnOcrPdf" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M8 13h8M8 17h5"/></svg> Make this PDF searchable…</button>
+    </div>
+    <div class="tool-group">
+      <h2>Convert</h2>
+      <button class="tool-btn" id="btnPdfToWord" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M8 13h8M8 17h8"/></svg> PDF → Word (.docx)</button>
+      <button class="tool-btn" id="btnPdfToPptx" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="13" rx="1"/><path d="M8 21h8"/></svg> PDF → PowerPoint (.pptx)</button>
+      <button class="tool-btn" id="btnPdfToExcel" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 10h18M9 4v16"/></svg> PDF → Excel (.xlsx)</button>
+      <button class="tool-btn" id="btnPdfToCsv" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 10h18M9 4v16M15 4v16"/></svg> PDF → CSV</button>
+      <button class="tool-btn" id="btnPdfToText" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h13"/></svg> PDF → Text (.txt)</button>
+      <button class="tool-btn" id="btnFileToPdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M12 12v6m-3-3h6"/></svg> Create PDF from file…</button>
+    </div>
+    <div class="tool-group">
+      <h2>Translate</h2>
+      <button class="tool-btn" id="btnTranslateText"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h9M7 3v2m0 0c0 4-1 7-4 9m4-4c1 2 2.5 3.5 4 4M14 21l4-9 4 9m-6.5-3h5"/></svg> Translate text…</button>
+      <button class="tool-btn" id="btnTranslatePdf" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"/><path d="M4 5h9M7 3v2m0 0c0 4-1 7-4 9" transform="translate(1,2) scale(0.55)"/></svg> Translate this PDF…</button>
+    </div>
+    <div class="tool-group">
+      <h2>Project</h2>
+      <button class="tool-btn" id="btnUndo" disabled>Undo <kbd>Ctrl Z</kbd></button>
+      <button class="tool-btn" id="btnRedo" disabled>Redo <kbd>Ctrl Y</kbd></button>
+      <button class="tool-btn danger" id="btnReset" disabled>Reset project</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="toolbar" id="toolbar" style="display:none;">
+      <input type="text" class="file-stat" id="outName" style="width:170px;font-weight:600;color:var(--ink);" value="document" aria-label="Output file name">
+      <span class="file-stat">.pdf</span>
+      <div class="sep"></div>
+      <span class="file-stat" id="pageCountStat">0 pages</span>
+      <span class="file-stat" id="sizeStat">— </span>
+      <div class="sep"></div>
+      <button class="btn ghost" id="btnSelectAll">Select all</button>
+      <button class="btn ghost" id="btnSelectNone">Clear selection</button>
+      <div class="sep"></div>
+      <label class="file-stat">Go to page</label>
+      <input type="number" id="gotoPage" min="1" value="1">
+      <div class="sep"></div>
+      <button class="btn primary" id="btnDownload">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+        Download PDF
+      </button>
+    </div>
+
+    <div class="dropzone" id="dropzone">
+      <h2>Drop PDFs here, or click to choose files</h2>
+      <p>Select one file to start a project, or several to merge them in order.</p>
+      <div class="stamp">FILES STAY ON THIS DEVICE</div>
+    </div>
+
+    <div id="grid" class="empty-hide"></div>
+  </main>
+</div>
+
+<div class="statusbar">
+  <span class="msg" id="statusMsg">Ready. Open a PDF to begin.</span>
+  <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<input type="file" id="fileInput" accept="application/pdf" multiple class="sr-only">
+<input type="file" id="insertInput" accept="application/pdf" class="sr-only">
+
+<div class="modal-backdrop" id="genericModal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modalTitle">Tool</h3><button class="icon-btn" id="modalClose" style="color:var(--ink); border-color:var(--line);">✕</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="modalCancel">Cancel</button>
+      <button class="btn primary" id="modalConfirm">Apply</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="zoomModal">
+  <div class="modal">
+    <div class="modal-head"><h3>Page preview</h3><button class="icon-btn" id="zoomClose" style="color:var(--ink); border-color:var(--line);">✕</button></div>
+    <div class="modal-body">
+      <div id="zoomCanvasWrap"><canvas id="zoomCanvas"></canvas></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" id="zoomOut">− Zoom out</button>
+      <button class="btn ghost" id="zoomIn">+ Zoom in</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+const { PDFDocument, degrees, rgb, StandardFonts } = PDFLib;
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+/* ---------- State ---------- */
+let workingBytes = null;      // Uint8Array of the current working PDF
+let history = [];             // undo stack of Uint8Array
+let historyIndex = -1;
+let selected = new Set();     // selected page indices (0-based)
+let sortableInstance = null;
+let zoomScale = 1.4;
+let zoomPageIndex = 0;
+
+const $ = (id) => document.getElementById(id);
+const grid = $('grid');
+
+/* iOS Safari note: FileSaver.js's saveAs() falls back to window.open() on iOS
+   because it doesn't trust Safari's native <a download> support — but modern
+   iOS Safari (13+) does support it, and window.open() alone won't reliably
+   save a .docx/.pptx/.xlsx to Files. This helper bypasses FileSaver.js and
+   triggers the download directly, which is what actually persists the file
+   to Downloads in the Files app on iPhone. */
+function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+/* ---------- Utilities ---------- */
+function toast(msg, isErr){
+  const t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' err' : '');
+  t.textContent = msg;
+  $('toastWrap').appendChild(t);
+  setTimeout(()=>t.remove(), 4200);
+}
+function setStatus(msg){ $('statusMsg').textContent = msg; }
+function showProgress(pct){
+  const track = $('progressTrack'), fill = $('progressFill');
+  if(pct === null){ track.classList.remove('show'); return; }
+  track.classList.add('show'); fill.style.width = pct + '%';
+}
+function fmtBytes(n){
+  if(n < 1024) return n + ' B';
+  if(n < 1024*1024) return (n/1024).toFixed(1) + ' KB';
+  return (n/1024/1024).toFixed(2) + ' MB';
+}
+function setToolsEnabled(on){
+  ['btnInsert','btnDuplicateSel','btnRotateSel','btnReverse','btnDeleteSel','btnExtract','btnSplit',
+   'btnWatermark','btnPageNum','btnCompress','btnMetadata','btnUndo','btnRedo','btnReset','btnOcrPdf',
+   'btnPdfToWord','btnPdfToPptx','btnPdfToExcel','btnPdfToCsv','btnPdfToText','btnTranslatePdf'].forEach(id=>{
+    $(id).disabled = !on;
+  });
+  $('toolbar').style.display = on ? 'flex' : 'none';
+  grid.classList.toggle('empty-hide', !on);
+  $('dropzone').style.display = on ? 'none' : 'block';
+}
+
+/* ---------- History ---------- */
+async function commit(newBytes, msg){
+  history = history.slice(0, historyIndex + 1);
+  history.push(newBytes);
+  if(history.length > 25) history.shift();
+  historyIndex = history.length - 1;
+  workingBytes = newBytes;
+  selected.clear();
+  await renderThumbnails();
+  if(msg) setStatus(msg);
+  updateUndoRedoButtons();
+}
+async function undo(){
+  if(historyIndex <= 0) return;
+  historyIndex--; workingBytes = history[historyIndex];
+  selected.clear(); await renderThumbnails(); setStatus('Undid last action.');
+  updateUndoRedoButtons();
+}
+async function redo(){
+  if(historyIndex >= history.length - 1) return;
+  historyIndex++; workingBytes = history[historyIndex];
+  selected.clear(); await renderThumbnails(); setStatus('Redid last action.');
+  updateUndoRedoButtons();
+}
+function updateUndoRedoButtons(){
+  $('btnUndo').disabled = historyIndex <= 0;
+  $('btnRedo').disabled = historyIndex >= history.length - 1;
+}
+
+/* ---------- Loading / merging files ---------- */
+async function loadFiles(fileList){
+  const files = Array.from(fileList).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+  if(!files.length){ toast('Please choose PDF files.', true); return; }
+  showProgress(5);
+  try{
+    let doc;
+    let startIdx = 0;
+    if(!workingBytes){
+      const firstBuf = await files[0].arrayBuffer();
+      doc = await PDFDocument.load(firstBuf, { ignoreEncryption:true });
+      startIdx = 1;
+      $('outName').value = files[0].name.replace(/\.pdf$/i,'') || 'document';
+    } else {
+      doc = await PDFDocument.load(workingBytes);
+    }
+    for(let i = startIdx; i < files.length; i++){
+      showProgress(10 + Math.round(((i+1)/files.length)*70));
+      const buf = await files[i].arrayBuffer();
+      const src = await PDFDocument.load(buf, { ignoreEncryption:true });
+      const copied = await doc.copyPages(src, src.getPageIndices());
+      copied.forEach(p => doc.addPage(p));
+    }
+    const bytes = await doc.save();
+    setToolsEnabled(true);
+    await commit(bytes, `Loaded ${files.length} file${files.length>1?'s':''} (${doc.getPageCount()} pages total).`);
+  } catch(e){
+    console.error(e);
+    toast('Could not open one of those PDFs — it may be corrupted or password protected.', true);
+  } finally { showProgress(null); }
+}
+
+/* ---------- Rendering thumbnails ---------- */
+async function renderThumbnails(){
+  showProgress(10);
+  grid.innerHTML = '';
+  if(!workingBytes){ showProgress(null); return; }
+  let pdf;
+  try{
+    pdf = await pdfjsLib.getDocument({ data: workingBytes.slice() }).promise;
+  } catch(e){
+    console.error(e); toast('Could not render the PDF for preview.', true); showProgress(null); return;
+  }
+  const n = pdf.numPages;
+  $('pageCountStat').textContent = n + (n===1 ? ' page' : ' pages');
+  $('sizeStat').textContent = fmtBytes(workingBytes.byteLength);
+  $('gotoPage').max = n;
+
+  for(let i = 1; i <= n; i++){
+    showProgress(10 + Math.round((i/n)*85));
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 0.32 });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width; canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    const card = document.createElement('div');
+    card.className = 'page-card';
+    card.dataset.index = i - 1;
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.setAttribute('aria-label', `Select page ${i}`);
+    cb.checked = selected.has(i-1);
+    cb.addEventListener('change', () => {
+      if(cb.checked) selected.add(parseInt(card.dataset.index)); else selected.delete(parseInt(card.dataset.index));
+      card.classList.toggle('sel', cb.checked);
+    });
+    card.appendChild(cb);
+
+    const thumbWrap = document.createElement('div');
+    thumbWrap.className = 'thumb-wrap';
+    canvas.style.cursor = 'zoom-in';
+    canvas.addEventListener('click', () => openZoom(i-1));
+    thumbWrap.appendChild(canvas);
+    card.appendChild(thumbWrap);
+
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.innerHTML = `<span>#${i}</span>`;
+    const ctrls = document.createElement('div');
+    ctrls.className = 'ctrls';
+    ctrls.appendChild(iconBtn('rotL', '↺', () => rotatePages([i-1], -90)));
+    ctrls.appendChild(iconBtn('rotR', '↻', () => rotatePages([i-1], 90)));
+    ctrls.appendChild(iconBtn('dup', '⧉', () => duplicatePages([i-1])));
+    ctrls.appendChild(iconBtn('del', '✕', () => deletePages([i-1])));
+    bar.appendChild(ctrls);
+    card.appendChild(bar);
+    if(selected.has(i-1)) card.classList.add('sel');
+
+    grid.appendChild(card);
+  }
+  showProgress(null);
+  initSortable();
+}
+function iconBtn(name, glyph, onClick){
+  const b = document.createElement('button');
+  b.textContent = glyph;
+  b.title = { rotL:'Rotate left', rotR:'Rotate right', dup:'Duplicate page', del:'Delete page' }[name];
+  b.setAttribute('aria-label', b.title);
+  b.addEventListener('click', (e) => { e.stopPropagation(); onClick(); });
+  return b;
+}
+
+function initSortable(){
+  if(sortableInstance) sortableInstance.destroy();
+  sortableInstance = Sortable.create(grid, {
+    animation:150,
+    onEnd: async () => {
+      const newOrder = Array.from(grid.children).map(c => parseInt(c.dataset.index));
+      await reorderPages(newOrder);
+    }
+  });
+}
+
+/* ---------- Page operations (each loads a fresh pdf-lib doc from workingBytes, mutates, saves) ---------- */
+async function withDoc(fn, successMsg){
+  try{
+    const doc = await PDFDocument.load(workingBytes);
+    await fn(doc);
+    const bytes = await doc.save();
+    await commit(bytes, successMsg);
+  } catch(e){
+    console.error(e); toast('That operation could not be completed.', true);
+  }
+}
+
+async function rotatePages(indices, delta){
+  await withDoc(async (doc) => {
+    const pages = doc.getPages();
+    indices.forEach(i => {
+      const p = pages[i];
+      const current = p.getRotation().angle;
+      p.setRotation(degrees((current + delta + 360) % 360));
+    });
+  }, `Rotated ${indices.length} page${indices.length>1?'s':''}.`);
+}
+
+async function duplicatePages(indices){
+  await withDoc(async (doc) => {
+    const sorted = [...indices].sort((a,b)=>a-b);
+    let offset = 0;
+    for(const i of sorted){
+      const [copy] = await doc.copyPages(doc, [i + offset]);
+      doc.insertPage(i + offset + 1, copy);
+      offset += 1;
+    }
+  }, `Duplicated ${indices.length} page${indices.length>1?'s':''}.`);
+}
+
+async function deletePages(indices){
+  await withDoc(async (doc) => {
+    if(doc.getPageCount() - indices.length < 1){ throw new Error('Cannot delete all pages.'); }
+    const sorted = [...new Set(indices)].sort((a,b)=>b-a);
+    sorted.forEach(i => doc.removePage(i));
+  }, `Deleted ${indices.length} page${indices.length>1?'s':''}.`);
+}
+
+// Order-rebuilding ops (reverse, drag-reorder) need a fresh document copied in the new order:
+async function rebuildWithOrder(order, msg){
+  try{
+    const doc = await PDFDocument.load(workingBytes);
+    const newDoc = await PDFDocument.create();
+    const copied = await newDoc.copyPages(doc, order);
+    copied.forEach(p => newDoc.addPage(p));
+    const bytes = await newDoc.save();
+    await commit(bytes, msg);
+  } catch(e){ console.error(e); toast('Could not reorder pages.', true); }
+}
+async function reorderPages(newOrder){ await rebuildWithOrder(newOrder, 'Reordered pages.'); }
+
+/* ---------- Selection ---------- */
+function selectedIndices(){ return Array.from(selected).sort((a,b)=>a-b); }
+
+/* ---------- Insert PDF at position ---------- */
+async function insertPdfAt(file, position){
+  showProgress(20);
+  try{
+    const doc = await PDFDocument.load(workingBytes);
+    const buf = await file.arrayBuffer();
+    const src = await PDFDocument.load(buf, { ignoreEncryption:true });
+    const copied = await doc.copyPages(src, src.getPageIndices());
+    copied.forEach((p, i) => doc.insertPage(Math.min(position + i, doc.getPageCount()), p));
+    const bytes = await doc.save();
+    await commit(bytes, `Inserted ${copied.length} pages at position ${position+1}.`);
+  } catch(e){ console.error(e); toast('Could not insert that PDF.', true); }
+  finally{ showProgress(null); }
+}
+
+/* ---------- Extract selected to new file ---------- */
+async function extractSelected(){
+  const idx = selectedIndices();
+  if(!idx.length){ toast('Select at least one page first.', true); return; }
+  try{
+    const doc = await PDFDocument.load(workingBytes);
+    const newDoc = await PDFDocument.create();
+    const copied = await newDoc.copyPages(doc, idx);
+    copied.forEach(p => newDoc.addPage(p));
+    const bytes = await newDoc.save();
+    downloadBlob(new Blob([bytes], {type:'application/pdf'}), `${$('outName').value || 'document'}_extracted.pdf`);
+    setStatus(`Extracted ${idx.length} pages to a new file.`);
+  } catch(e){ console.error(e); toast('Could not extract those pages.', true); }
+}
+
+/* ---------- Split ---------- */
+async function splitPdf({mode, everyN, ranges}){
+  try{
+    const doc = await PDFDocument.load(workingBytes);
+    const total = doc.getPageCount();
+    let chunks = [];
+    if(mode === 'every'){
+      for(let start = 0; start < total; start += everyN){
+        chunks.push(Array.from({length: Math.min(everyN, total-start)}, (_,k)=>start+k));
+      }
+    } else {
+      for(const r of ranges){
+        const [s,e] = r;
+        if(s < 1 || e > total || s > e) continue;
+        chunks.push(Array.from({length: e-s+1}, (_,k)=>s-1+k));
+      }
+      if(!chunks.length) throw new Error('No valid ranges.');
+    }
+    const zip = new JSZip();
+    for(let c = 0; c < chunks.length; c++){
+      const newDoc = await PDFDocument.create();
+      const copied = await newDoc.copyPages(doc, chunks[c]);
+      copied.forEach(p => newDoc.addPage(p));
+      const bytes = await newDoc.save();
+      zip.file(`${$('outName').value || 'document'}_part${c+1}.pdf`, bytes);
+    }
+    const zipBlob = await zip.generateAsync({type:'blob'});
+    downloadBlob(zipBlob, `${$('outName').value || 'document'}_split.zip`);
+    setStatus(`Split into ${chunks.length} files.`);
+  } catch(e){ console.error(e); toast('Could not split — check your ranges.', true); }
+}
+
+/* ---------- Watermark ---------- */
+async function addWatermark({text, opacity, size}){
+  await withDoc(async (doc) => {
+    const font = await doc.embedFont(StandardFonts.HelveticaBold);
+    doc.getPages().forEach(page => {
+      const { width, height } = page.getSize();
+      const textWidth = font.widthOfTextAtSize(text, size);
+      page.drawText(text, {
+        x: width/2 - textWidth/2, y: height/2, size, font,
+        color: rgb(0.55,0.55,0.55), opacity, rotate: degrees(45),
+      });
+    });
+  }, 'Watermark added to all pages.');
+}
+
+/* ---------- Page numbers ---------- */
+async function addPageNumbers({position, startNum}){
+  await withDoc(async (doc) => {
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    const pages = doc.getPages();
+    pages.forEach((page, i) => {
+      const { width } = page.getSize();
+      const label = String(startNum + i);
+      const size = 10;
+      const textWidth = font.widthOfTextAtSize(label, size);
+      let x;
+      if(position === 'left') x = 28;
+      else if(position === 'right') x = width - 28 - textWidth;
+      else x = width/2 - textWidth/2;
+      page.drawText(label, { x, y: 22, size, font, color: rgb(0.3,0.3,0.3) });
+    });
+  }, 'Page numbers added.');
+}
+
+/* ---------- Compress ----------
+   Real compression, not just re-serialization: walks every indirect object,
+   finds embedded JPEG images (Filter /DCTDecode), decodes them on a canvas,
+   downsizes to maxDim and re-encodes at the chosen JPEG quality, then swaps
+   the stream bytes in place. Non-JPEG images (Flate/CCITT/JPX) are left
+   untouched since decoding those correctly needs more than a canvas can do.
+   A page is only changed if the new image is actually smaller. */
+function loadImageFromBytes(bytes, mime){
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([bytes], { type: mime || 'image/jpeg' });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+    img.src = url;
+  });
+}
+async function recompressJpegBytes(bytes, quality, maxDim){
+  const img = await loadImageFromBytes(bytes, 'image/jpeg');
+  let w = img.naturalWidth, h = img.naturalHeight;
+  if(!w || !h) throw new Error('unreadable image');
+  if(Math.max(w, h) > maxDim){
+    const scale = maxDim / Math.max(w, h);
+    w = Math.max(1, Math.round(w * scale));
+    h = Math.max(1, Math.round(h * scale));
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+  const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
+  const buf = await blob.arrayBuffer();
+  return { bytes: new Uint8Array(buf), width: w, height: h };
+}
+async function compressPdf({ quality, maxDim }){
+  const before = workingBytes.byteLength;
+  showProgress(5);
+  try{
+    const doc = await PDFDocument.load(workingBytes);
+    const context = doc.context;
+    const PN = PDFLib.PDFName.of.bind(PDFLib.PDFName);
+    const objects = context.enumerateIndirectObjects();
+    let processed = 0, skipped = 0, considered = 0;
+    for(let idx = 0; idx < objects.length; idx++){
+      const [ref, obj] = objects[idx];
+      if(!(obj instanceof PDFLib.PDFStream)) continue;
+      const dict = obj.dict;
+      const subtype = dict.get(PN('Subtype'));
+      if(!subtype || subtype.toString() !== '/Image') continue;
+      const filter = dict.get(PN('Filter'));
+      const filterName = filter ? filter.toString() : '';
+      if(filterName !== '/DCTDecode'){ skipped++; continue; } // only touch JPEGs — safe scope
+      considered++;
+      if(considered % 3 === 0) showProgress(5 + Math.round((considered/(considered+1))*60));
+      try{
+        const rawBytes = obj.getContents();
+        if(!rawBytes || rawBytes.length < 6000){ skipped++; continue; } // tiny images aren't worth touching
+        const result = await recompressJpegBytes(rawBytes, quality, maxDim);
+        if(result.bytes.byteLength < rawBytes.byteLength){
+          dict.set(PN('Width'), PDFLib.PDFNumber.of(result.width));
+          dict.set(PN('Height'), PDFLib.PDFNumber.of(result.height));
+          dict.set(PN('Filter'), PN('DCTDecode'));
+          dict.set(PN('ColorSpace'), PN('DeviceRGB'));
+          dict.set(PN('BitsPerComponent'), PDFLib.PDFNumber.of(8));
+          dict.delete(PN('DecodeParms'));
+          dict.delete(PN('Decode'));
+          dict.delete(PN('SMask')); // canvas re-encode flattens transparency onto white
+          const newStream = PDFLib.PDFRawStream.of(dict, result.bytes);
+          context.assign(ref, newStream);
+          processed++;
+        } else {
+          skipped++;
+        }
+      } catch(inner){ skipped++; }
+    }
+    showProgress(90);
+    const bytes = await doc.save({ useObjectStreams:true });
+    const after = bytes.byteLength;
+    const pct = after < before ? Math.round((1 - after/before) * 100) : 0;
+    const summary = processed
+      ? `Compressed ${processed} image${processed>1?'s':''}: ${fmtBytes(before)} → ${fmtBytes(after)} (${pct}% smaller).`
+      : `${fmtBytes(before)} → ${fmtBytes(after)}. No embedded JPEGs large enough to recompress` + (skipped ? ` (${skipped} image${skipped>1?'s':''} left untouched — not JPEG, or already efficient).` : '.');
+    await commit(bytes, summary);
+  } catch(e){
+    console.error(e); toast('Could not compress this PDF.', true);
+  } finally { showProgress(null); }
+}
+
+/* ---------- Metadata ---------- */
+async function editMetadata({title, author, subject, keywords}){
+  await withDoc(async (doc) => {
+    doc.setTitle(title || '');
+    doc.setAuthor(author || '');
+    doc.setSubject(subject || '');
+    doc.setKeywords((keywords||'').split(',').map(k=>k.trim()).filter(Boolean));
+    doc.setProducer('PDF Workbench (browser-only)');
+  }, 'Metadata updated.');
+}
+async function getMetadata(){
+  const doc = await PDFDocument.load(workingBytes);
+  return {
+    title: doc.getTitle() || '', author: doc.getAuthor() || '',
+    subject: doc.getSubject() || '', keywords: (doc.getKeywords() || '')
+  };
+}
+
+/* ---------- OCR ----------
+   Two flows:
+   1. OCR a standalone image file → plain text, via Tesseract.js directly.
+   2. OCR every (or selected) page of the working PDF at high render scale,
+      then overlay the recognized words back onto the page as invisible,
+      correctly-positioned text — a genuine searchable-PDF text layer, not
+      a cosmetic label. Word placement is mapped from canvas pixel space
+      back to PDF point space using the render scale; pages that are
+      rotated are skipped for the overlay (flagged in the summary) since
+      mapping rotated coordinates reliably needs more than this pass. */
+let ocrBusy = false;
+
+async function runOcrOnImageFile(file, lang){
+  setStatus('Running OCR on image…'); showProgress(5);
+  try{
+    const { data } = await Tesseract.recognize(file, lang, {
+      logger: m => { if(m.status === 'recognizing text') showProgress(5 + Math.round(m.progress*90)); }
+    });
+    return data.text || '';
+  } catch(e){ console.error(e); toast('OCR failed — try a clearer image.', true); return ''; }
+  finally { showProgress(null); setStatus('OCR complete.'); }
+}
+
+async function renderPdfPageToCanvas(pdf, pageNum, scale){
+  const page = await pdf.getPage(pageNum);
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width; canvas.height = viewport.height;
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+  return { canvas, rotation: page.rotate };
+}
+
+async function runOcrOnPdfPages(lang, pageIndices){
+  if(ocrBusy){ toast('OCR is already running — please wait for it to finish.', true); return null; }
+  ocrBusy = true;
+  const renderScale = 2.2;
+  const results = [];
+  try{
+    const pdf = await pdfjsLib.getDocument({ data: workingBytes.slice() }).promise;
+    for(let i = 0; i < pageIndices.length; i++){
+      const pageNum = pageIndices[i] + 1;
+      setStatus(`OCR — rendering page ${pageNum} (${i+1}/${pageIndices.length})…`);
+      const { canvas, rotation } = await renderPdfPageToCanvas(pdf, pageNum, renderScale);
+      setStatus(`OCR — reading page ${pageNum} (${i+1}/${pageIndices.length})…`);
+      const { data } = await Tesseract.recognize(canvas, lang, {
+        logger: m => { if(m.status === 'recognizing text') showProgress(Math.round(((i + m.progress) / pageIndices.length) * 100)); }
+      });
+      results.push({
+        pageIndex: pageIndices[i], text: data.text || '', words: data.words || [],
+        renderScale, rotation
+      });
+    }
+    return results;
+  } catch(e){ console.error(e); toast('OCR failed partway through — try fewer pages at once.', true); return null; }
+  finally { ocrBusy = false; showProgress(null); setStatus('OCR complete.'); }
+}
+
+function ocrResultsToText(results){
+  return results.map(r => `--- Page ${r.pageIndex + 1} ---\n${(r.text || '').trim()}`).join('\n\n');
+}
+
+async function buildSearchablePdf(results){
+  showProgress(20);
+  try{
+    const doc = await PDFDocument.load(workingBytes);
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    const pages = doc.getPages();
+    let overlaid = 0, skippedRotated = 0;
+    for(const r of results){
+      const page = pages[r.pageIndex];
+      if(!page) continue;
+      if(r.rotation % 360 !== 0){ skippedRotated++; continue; }
+      const { height: pageHeight } = page.getSize();
+      const scale = r.renderScale;
+      for(const w of (r.words || [])){
+        if(!w.text || !w.text.trim()) continue;
+        if(typeof w.confidence === 'number' && w.confidence < 35) continue;
+        const { x0, y0, y1 } = w.bbox;
+        const boxHeight = (y1 - y0) / scale;
+        if(boxHeight <= 0) continue;
+        const fontSize = Math.max(4, Math.min(boxHeight * 0.95, 40));
+        page.drawText(w.text, {
+          x: x0 / scale,
+          y: pageHeight - (y1 / scale),
+          size: fontSize,
+          font,
+          opacity: 0, // invisible: preserves the original look, adds selectable/searchable text
+        });
+      }
+      overlaid++;
+    }
+    const bytes = await doc.save();
+    const msg = `Made ${overlaid} page${overlaid !== 1 ? 's' : ''} searchable.` +
+      (skippedRotated ? ` ${skippedRotated} rotated page${skippedRotated>1?'s':''} skipped — straighten rotation first, then re-run OCR on those pages.` : '');
+    await commit(bytes, msg);
+  } catch(e){ console.error(e); toast('Could not build the searchable text layer.', true); }
+  finally { showProgress(null); }
+}
+
+/* ---------- Conversion: shared PDF text-layer helpers ----------
+   Unlike OCR, this reads the PDF's real text layer via PDF.js — instant
+   and exact for born-digital PDFs, but returns nothing for scans (no text
+   layer to read), in which case each tool tells the user to OCR first. */
+async function getPdfPagesTextItems(){
+  const pdf = await pdfjsLib.getDocument({ data: workingBytes.slice() }).promise;
+  const pages = [];
+  for(let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const items = content.items
+      .filter(it => typeof it.str === 'string')
+      .map(it => ({ str: it.str, x: it.transform[4], y: it.transform[5], width: it.width || 0 }));
+    pages.push({ pageIndex: i - 1, items });
+  }
+  return pages;
+}
+function groupIntoLines(items, tolerance = 3){
+  const sorted = [...items].sort((a, b) => b.y - a.y);
+  const lines = [];
+  for(const it of sorted){
+    let line = lines.find(l => Math.abs(l.y - it.y) <= tolerance);
+    if(!line){ line = { y: it.y, items: [] }; lines.push(line); }
+    line.items.push(it);
+  }
+  lines.sort((a, b) => b.y - a.y);
+  lines.forEach(l => l.items.sort((a, b) => a.x - b.x));
+  return lines;
+}
+function lineToText(line){
+  let text = '', prevEnd = null;
+  for(const it of line.items){
+    if(prevEnd !== null && (it.x - prevEnd) > 1.5) text += ' ';
+    text += it.str;
+    prevEnd = it.x + it.width;
+  }
+  return text;
+}
+function lineToCells(items, gapThreshold = 9){
+  const cells = []; let current = '', prevEnd = null;
+  for(const it of items){
+    if(prevEnd !== null){
+      const gap = it.x - prevEnd;
+      if(gap > gapThreshold){ cells.push(current.trim()); current = ''; }
+      else if(gap > 1.5){ current += ' '; }
+    }
+    current += it.str;
+    prevEnd = it.x + it.width;
+  }
+  cells.push(current.trim());
+  return cells;
+}
+function toCsvValue(v){
+  const s = String(v ?? '');
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+async function collectPdfRows(){
+  const pages = await getPdfPagesTextItems();
+  const rows = []; let hasText = false;
+  pages.forEach(p => {
+    groupIntoLines(p.items).forEach(l => {
+      const cells = lineToCells(l.items, 9);
+      if(cells.some(c => c.length)) hasText = true;
+      rows.push(cells);
+    });
+  });
+  return { rows, hasText };
+}
+
+/* ---------- Conversion: PDF → Word (.docx) ----------
+   Builds a minimal, valid OOXML .docx by hand (no server, no library
+   needed beyond JSZip) — plain paragraphs, page breaks between source
+   pages. Real formatting (bold, tables, images) isn't reconstructed. */
+function escapeXml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+async function buildDocxFromPages(pagesLines){
+  const zip = new JSZip();
+  zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+</Types>`);
+  zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+  zip.file('word/_rels/document.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`);
+  zip.file('word/styles.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="22"/></w:rPr></w:rPrDefault></w:docDefaults>
+<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>
+</w:styles>`);
+  let body = '';
+  pagesLines.forEach((paras, pIdx) => {
+    if(pIdx > 0) body += '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+    paras.forEach(line => {
+      const run = line.trim().length ? `<w:r><w:t xml:space="preserve">${escapeXml(line)}</w:t></w:r>` : '';
+      body += `<w:p>${run}</w:p>`;
+    });
+  });
+  const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body>
+</w:document>`;
+  zip.file('word/document.xml', documentXml);
+  return await zip.generateAsync({ type:'uint8array' });
+}
+
+/* ---------- Conversion: file → PDF ---------- */
+async function buildTextPdf(paragraphs){
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const pageWidth = 595.28, pageHeight = 841.89, margin = 56;
+  const usableWidth = pageWidth - margin * 2, fontSize = 11, lineHeight = 15;
+  let page = doc.addPage([pageWidth, pageHeight]);
+  let y = pageHeight - margin;
+  const newPage = () => { page = doc.addPage([pageWidth, pageHeight]); y = pageHeight - margin; };
+  for(const para of paragraphs){
+    const words = para.split(/\s+/).filter(Boolean);
+    if(!words.length){ y -= lineHeight; if(y < margin) newPage(); continue; }
+    let line = '';
+    for(const word of words){
+      const test = line ? line + ' ' + word : word;
+      if(font.widthOfTextAtSize(test, fontSize) > usableWidth){
+        if(y < margin + lineHeight) newPage();
+        page.drawText(line, { x: margin, y, size: fontSize, font, color: rgb(0.1,0.1,0.1) });
+        y -= lineHeight; line = word;
+      } else line = test;
+    }
+    if(line){
+      if(y < margin + lineHeight) newPage();
+      page.drawText(line, { x: margin, y, size: fontSize, font, color: rgb(0.1,0.1,0.1) });
+      y -= lineHeight;
+    }
+    y -= lineHeight * 0.4;
+    if(y < margin) newPage();
+  }
+  return await doc.save();
+}
+async function buildTablePdf(rows){
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const pageWidth = 841.89, pageHeight = 595.28, margin = 30; // A4 landscape — friendlier for wide tables
+  const usableWidth = pageWidth - margin * 2;
+  const numCols = Math.max(1, ...rows.map(r => r.length));
+  const colWidth = usableWidth / numCols;
+  const rowHeight = 20, fontSize = 9;
+  let page = doc.addPage([pageWidth, pageHeight]);
+  let y = pageHeight - margin;
+  const header = rows.length ? rows[0] : null;
+
+  function drawRow(row, isHeader){
+    for(let c = 0; c < numCols; c++){
+      const x = margin + c * colWidth;
+      if(isHeader){
+        page.drawRectangle({ x, y: y - rowHeight, width: colWidth, height: rowHeight, color: rgb(0.07,0.23,0.2) });
+      } else {
+        page.drawRectangle({ x, y: y - rowHeight, width: colWidth, height: rowHeight, borderColor: rgb(0.8,0.8,0.8), borderWidth: 0.5 });
+      }
+      const useFont = isHeader ? fontBold : font;
+      let text = String(row[c] ?? '');
+      const maxW = colWidth - 8;
+      while(useFont.widthOfTextAtSize(text, fontSize) > maxW && text.length > 1){ text = text.slice(0, -2) + '…'; }
+      page.drawText(text, { x: x + 4, y: y - rowHeight + 6, size: fontSize, font: useFont, color: isHeader ? rgb(1,1,1) : rgb(0.1,0.1,0.1) });
+    }
+    y -= rowHeight;
+  }
+  if(header) drawRow(header, true);
+  const body = rows.slice(1);
+  for(const r of body){
+    if(y - rowHeight < margin){ page = doc.addPage([pageWidth, pageHeight]); y = pageHeight - margin; if(header) drawRow(header, true); }
+    drawRow(r, false);
+  }
+  return await doc.save();
+}
+async function convertFileToPdf(file){
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  showProgress(15); setStatus(`Converting ${file.name}…`);
+  try{
+    let bytes;
+    if(ext === 'docx'){
+      const buf = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer: buf });
+      const paragraphs = result.value.split(/\r?\n+/);
+      bytes = await buildTextPdf(paragraphs);
+    } else if(ext === 'pptx'){
+      const result = await convertPptxFileToPdf(file);
+      bytes = result.bytes;
+    } else if(['csv','xlsx','xls'].includes(ext)){
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type:'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:false, defval:'' });
+      bytes = await buildTablePdf(rows);
+    } else if(['txt','md'].includes(ext)){
+      const text = await file.text();
+      const paragraphs = text.split(/\r?\n\s*\r?\n/).map(p => p.replace(/\r?\n/g, ' ').trim());
+      bytes = await buildTextPdf(paragraphs);
+    } else {
+      toast('That file type isn\u2019t supported for PDF creation yet.', true); return;
+    }
+    const name = file.name.replace(/\.[^.]+$/, '') + '.pdf';
+    downloadBlob(new Blob([bytes], { type:'application/pdf' }), name);
+    setStatus(`Created ${name}.`);
+  } catch(e){ console.error(e); toast('Could not convert that file.', true); }
+  finally { showProgress(null); }
+}
+
+/* ---------- Translation ----------
+   There is no way to do real machine translation across 100+ languages
+   entirely offline in a browser tab, so — unlike every other tool in this
+   app — this one does call out to the internet: the text you choose to
+   translate (not your whole file, unless you ask it to) is sent to the
+   free MyMemory translation API. It needs no API key, but is rate-limited
+   (roughly 500 words/day anonymously, more if you supply an email — MyMemory
+   raises the limit for a registered address). Long text is chunked
+   automatically since each request is capped at a few hundred characters. */
+const LANGS = [
+  ['en','English'],['hi','Hindi'],['bn','Bengali'],['ta','Tamil'],['te','Telugu'],['mr','Marathi'],
+  ['gu','Gujarati'],['pa','Punjabi'],['ur','Urdu'],['kn','Kannada'],['ml','Malayalam'],['or','Odia'],
+  ['ne','Nepali'],['si','Sinhala'],['es','Spanish'],['fr','French'],['de','German'],['pt','Portuguese'],
+  ['it','Italian'],['nl','Dutch'],['ru','Russian'],['zh-CN','Chinese (Simplified)'],['ja','Japanese'],
+  ['ko','Korean'],['ar','Arabic'],['tr','Turkish'],['vi','Vietnamese'],['th','Thai'],['id','Indonesian'],
+  ['ms','Malay'],['pl','Polish'],['uk','Ukrainian'],['ro','Romanian'],['el','Greek'],['he','Hebrew'],
+  ['cs','Czech'],['hu','Hungarian'],['sv','Swedish'],['fa','Persian'],['sw','Swahili'],
+];
+function langOptions(withAuto){
+  return (withAuto ? '<option value="auto">Auto-detect</option>' : '') +
+    LANGS.map(([c,n]) => `<option value="${c}">${n}</option>`).join('');
+}
+function langName(code){
+  if(code === 'auto') return 'Original (auto-detected)';
+  const f = LANGS.find(l => l[0] === code);
+  return f ? f[1] : code;
+}
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+async function translateChunk(text, source, target, email){
+  if(!text.trim()) return '';
+  const langpair = encodeURIComponent(`${source}|${target}`);
+  let url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langpair}`;
+  if(email) url += `&de=${encodeURIComponent(email)}`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('Translation service unavailable.');
+  const data = await res.json();
+  if(data.responseStatus && Number(data.responseStatus) !== 200){
+    throw new Error(data.responseDetails || 'Translation limit reached.');
+  }
+  return data.responseData?.translatedText || '';
+}
+async function translateFullText(text, source, target, email, onProgress){
+  const lines = text.split('\n');
+  const out = [];
+  for(let i = 0; i < lines.length; i++){
+    const line = lines[i];
+    if(!line.trim()){ out.push(''); continue; }
+    if(line.length <= 480){
+      out.push(await translateChunk(line, source, target, email));
+    } else {
+      const sentences = line.match(/[^.!?]+[.!?]*\s*/g) || [line];
+      let buf = '', parts = [];
+      for(const s of sentences){
+        if((buf + s).length > 450 && buf){ parts.push(buf); buf = ''; }
+        buf += s;
+      }
+      if(buf) parts.push(buf);
+      const translatedParts = [];
+      for(const part of parts){ translatedParts.push(await translateChunk(part, source, target, email)); await sleep(200); }
+      out.push(translatedParts.join(' '));
+    }
+    if(onProgress) onProgress(i + 1, lines.length);
+    await sleep(200);
+  }
+  return out.join('\n');
+}
+function buildBilingualHtml(original, translated, sourceLabel, targetLabel){
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const o = original.split('\n'), t = translated.split('\n');
+  const n = Math.max(o.length, t.length);
+  let rows = '';
+  for(let i = 0; i < n; i++) rows += `<tr><td>${esc(o[i]||'')}</td><td>${esc(t[i]||'')}</td></tr>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Translation</title>
+<style>body{font-family:sans-serif;margin:24px;} table{width:100%;border-collapse:collapse;} td{border:1px solid #ccc;padding:8px;vertical-align:top;width:50%;white-space:pre-wrap;} th{background:#113B34;color:#fff;padding:8px;text-align:left;}</style>
+</head><body><h1>Translation</h1><table><tr><th>${esc(sourceLabel)}</th><th>${esc(targetLabel)}</th></tr>${rows}</table></body></html>`;
+}
+function showTranslationResult(original, translated, sourceLabel, targetLabel, baseName){
+  const ta = 'style="width:100%;min-height:260px;font-size:12.5px;padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);"';
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  openModal('Translation', `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div><label style="font-size:11px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px;">${sourceLabel}</label>
+        <textarea readonly ${ta}>${esc(original)}</textarea></div>
+      <div><label style="font-size:11px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px;">${targetLabel}</label>
+        <textarea readonly ${ta}>${esc(translated)}</textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+      <button class="btn ghost" id="trCopy" type="button">Copy translation</button>
+      <button class="btn ghost" id="trTxt" type="button">Download .txt</button>
+      <button class="btn ghost" id="trDocx" type="button">Download .docx</button>
+      <button class="btn ghost" id="trPdf" type="button">Download .pdf</button>
+      <button class="btn ghost" id="trHtml" type="button">Download bilingual .html</button>
+    </div>
+  `, async () => {});
+  $('modalConfirm').style.display = 'none';
+  $('modalCancel').textContent = 'Close';
+  setTimeout(() => {
+    $('trCopy').addEventListener('click', async () => {
+      try{ await navigator.clipboard.writeText(translated); toast('Translation copied.'); }
+      catch{ toast('Could not copy automatically — select the text and copy manually.', true); }
+    });
+    $('trTxt').addEventListener('click', () => downloadBlob(new Blob([translated], {type:'text/plain'}), baseName + '.txt'));
+    $('trDocx').addEventListener('click', async () => {
+      const bytes = await buildDocxFromPages([translated.split('\n')]);
+      downloadBlob(new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}), baseName + '.docx');
+    });
+    $('trPdf').addEventListener('click', async () => {
+      const paras = translated.split(/\n\s*\n/).map(p => p.replace(/\n/g, ' '));
+      const bytes = await buildTextPdf(paras);
+      downloadBlob(new Blob([bytes], {type:'application/pdf'}), baseName + '.pdf');
+    });
+    $('trHtml').addEventListener('click', () => {
+      const html = buildBilingualHtml(original, translated, sourceLabel, targetLabel);
+      downloadBlob(new Blob([html], {type:'text/html'}), baseName + '_bilingual.html');
+    });
+  }, 0);
+}
+
+/* ---------- Conversion: PPTX ⇄ PDF ----------
+   Both directions are structural, not visual: PPTX → PDF reads each
+   slide's text runs (titles/bullets) and lays them out one per PDF page;
+   PDF → PPTX does the reverse, treating each page's first line as a title
+   and the rest as bullets. Original slide backgrounds, images, exact
+   positions, and animations are not reproduced — this preserves content,
+   not design. */
+function decodeXmlEntities(s){
+  return String(s).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&');
+}
+function extractPptxSlideLines(xml){
+  const paraMatches = xml.match(/<a:p>[\s\S]*?<\/a:p>/g) || [];
+  return paraMatches.map(p => {
+    const runs = p.match(/<a:t>([\s\S]*?)<\/a:t>/g) || [];
+    return decodeXmlEntities(runs.map(r => r.replace(/^<a:t>|<\/a:t>$/g,'')).join(''));
+  });
+}
+async function convertPptxFileToPdf(file){
+  const buf = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(buf);
+  let pageWidthPt = 960, pageHeightPt = 540;
+  const presFile = zip.file('ppt/presentation.xml');
+  if(presFile){
+    const presXml = await presFile.async('string');
+    const cx = presXml.match(/<p:sldSz[^>]*\bcx="(\d+)"/);
+    const cy = presXml.match(/<p:sldSz[^>]*\bcy="(\d+)"/);
+    if(cx && cy){ pageWidthPt = parseInt(cx[1]) / 12700; pageHeightPt = parseInt(cy[1]) / 12700; }
+  }
+  const slideFiles = Object.keys(zip.files)
+    .filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n))
+    .sort((a,b) => parseInt(a.match(/slide(\d+)\.xml/)[1]) - parseInt(b.match(/slide(\d+)\.xml/)[1]));
+  if(!slideFiles.length) throw new Error('No slides found in this file.');
+  const slides = [];
+  for(const f of slideFiles) slides.push(extractPptxSlideLines(await zip.file(f).async('string')));
+  return { bytes: await buildSlideDeckPdf(slides, pageWidthPt, pageHeightPt), count: slides.length };
+}
+function drawWrappedText(page, text, x, y, maxWidth, size, font, color, lineHeight){
+  const words = String(text).split(/\s+/).filter(Boolean);
+  if(!words.length) return y - lineHeight;
+  let line = '';
+  for(const w of words){
+    const test = line ? line + ' ' + w : w;
+    if(font.widthOfTextAtSize(test, size) > maxWidth && line){
+      page.drawText(line, { x, y, size, font, color }); y -= lineHeight; line = w;
+    } else line = test;
+  }
+  if(line){ page.drawText(line, { x, y, size, font, color }); y -= lineHeight; }
+  return y;
+}
+async function buildSlideDeckPdf(slides, pageWidth, pageHeight){
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const margin = 40, usableWidth = pageWidth - margin * 2;
+  for(const lines of slides){
+    const page = doc.addPage([pageWidth, pageHeight]);
+    let y = pageHeight - margin;
+    const nonEmpty = lines.filter(l => l.trim().length);
+    if(!nonEmpty.length){
+      page.drawText('(Blank slide)', { x: margin, y: pageHeight/2, size:14, font, color: rgb(0.6,0.6,0.6) });
+      continue;
+    }
+    y = drawWrappedText(page, nonEmpty[0], margin, y, usableWidth, 22, fontBold, rgb(0.043,0.231,0.204), 27);
+    y -= 8;
+    for(let i = 1; i < nonEmpty.length; i++){
+      if(y < margin + 16) break; // one page per slide — later bullets are truncated rather than overflowing
+      y = drawWrappedText(page, '\u2022  ' + nonEmpty[i], margin + 8, y, usableWidth - 8, 13, font, rgb(0.16,0.16,0.16), 18);
+      y -= 3;
+    }
+  }
+  return await doc.save();
+}
+async function buildPptxFromSlides(slides){
+  const zip = new JSZip();
+  const esc = escapeXml;
+  zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
+<Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>
+<Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>
+<Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>
+${slides.map((_,i)=>`<Override PartName="/ppt/slides/slide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join('')}
+<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+</Types>`);
+  zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>`);
+  zip.file('docProps/core.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<dc:title>Presentation</dc:title><dc:creator>PDF Workbench</dc:creator>
+</cp:coreProperties>`);
+  zip.file('docProps/app.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+<Application>PDF Workbench</Application>
+</Properties>`);
+  zip.file('ppt/presentation.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+<p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rIdMaster1"/></p:sldMasterIdLst>
+<p:sldIdLst>${slides.map((_,i)=>`<p:sldId id="${256+i}" r:id="rIdSlide${i+1}"/>`).join('')}</p:sldIdLst>
+<p:sldSz cx="12192000" cy="6858000"/>
+<p:notesSz cx="6858000" cy="9144000"/>
+</p:presentation>`);
+  zip.file('ppt/_rels/presentation.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rIdMaster1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>
+${slides.map((_,i)=>`<Relationship Id="rIdSlide${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i+1}.xml"/>`).join('')}
+</Relationships>`);
+  zip.file('ppt/theme/theme1.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Theme">
+<a:themeElements>
+<a:clrScheme name="Office">
+<a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1><a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1>
+<a:dk2><a:srgbClr val="113B34"/></a:dk2><a:lt2><a:srgbClr val="F6F5F1"/></a:lt2>
+<a:accent1><a:srgbClr val="B65C1F"/></a:accent1><a:accent2><a:srgbClr val="113B34"/></a:accent2>
+<a:accent3><a:srgbClr val="4B5750"/></a:accent3><a:accent4><a:srgbClr val="DEDACE"/></a:accent4>
+<a:accent5><a:srgbClr val="1B4F45"/></a:accent5><a:accent6><a:srgbClr val="A3341E"/></a:accent6>
+<a:hlink><a:srgbClr val="0563C1"/></a:hlink><a:folHlink><a:srgbClr val="954F72"/></a:folHlink>
+</a:clrScheme>
+<a:fontScheme name="Office"><a:majorFont><a:latin typeface="Calibri"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>
+<a:minorFont><a:latin typeface="Calibri"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme>
+<a:fmtScheme name="Office">
+<a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst>
+<a:lnStyleLst><a:ln><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln><a:ln><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln><a:ln><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln></a:lnStyleLst>
+<a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst>
+<a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst>
+</a:fmtScheme>
+</a:themeElements>
+</a:theme>`);
+  zip.file('ppt/slideMasters/slideMaster1.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+<p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld>
+<p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/>
+<p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rIdLayout1"/></p:sldLayoutIdLst>
+</p:sldMaster>`);
+  zip.file('ppt/slideMasters/_rels/slideMaster1.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rIdLayout1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
+<Relationship Id="rIdTheme1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/>
+</Relationships>`);
+  zip.file('ppt/slideLayouts/slideLayout1.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="blank" preserve="1">
+<p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld>
+<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
+</p:sldLayout>`);
+  zip.file('ppt/slideLayouts/_rels/slideLayout1.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rIdMaster1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/>
+</Relationships>`);
+  slides.forEach((slide, i) => {
+    const title = slide.title || `Slide ${i+1}`;
+    const bodyParas = (slide.bullets || []).filter(b => b.trim()).map(b =>
+      `<a:p><a:pPr marL="285750" indent="-285750"><a:buChar char="\u2022"/></a:pPr><a:r><a:rPr lang="en-US" sz="1800"/><a:t>${esc(b)}</a:t></a:r></a:p>`
+    ).join('') || `<a:p><a:r><a:rPr lang="en-US" sz="1800"/><a:t></a:t></a:r></a:p>`;
+    zip.file(`ppt/slides/slide${i+1}.xml`, `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+<p:cSld><p:spTree>
+<p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+<p:grpSpPr/>
+<p:sp><p:nvSpPr><p:cNvPr id="2" name="Title"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph type="title"/></p:nvPr></p:nvSpPr>
+<p:spPr><a:xfrm><a:off x="609600" y="365760"/><a:ext cx="10972800" cy="1143000"/></a:xfrm></p:spPr>
+<p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr lang="en-US" sz="3200" b="1"/><a:t>${esc(title)}</a:t></a:r></a:p></p:txBody>
+</p:sp>
+<p:sp><p:nvSpPr><p:cNvPr id="3" name="Body"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph type="body" idx="1"/></p:nvPr></p:nvSpPr>
+<p:spPr><a:xfrm><a:off x="609600" y="1600200"/><a:ext cx="10972800" cy="4900000"/></a:xfrm></p:spPr>
+<p:txBody><a:bodyPr/><a:lstStyle/>${bodyParas}</p:txBody>
+</p:sp>
+</p:spTree></p:cSld>
+<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
+</p:sld>`);
+    zip.file(`ppt/slides/_rels/slide${i+1}.xml.rels`, `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
+</Relationships>`);
+  });
+  return await zip.generateAsync({ type:'uint8array' });
+}
+
+/* ---------- Zoom modal ---------- */
+async function openZoom(index){
+  zoomPageIndex = index; zoomScale = 1.4;
+  $('zoomModal').classList.add('show');
+  await renderZoom();
+}
+async function renderZoom(){
+  const pdf = await pdfjsLib.getDocument({ data: workingBytes.slice() }).promise;
+  const page = await pdf.getPage(zoomPageIndex + 1);
+  const viewport = page.getViewport({ scale: zoomScale });
+  const canvas = $('zoomCanvas');
+  canvas.width = viewport.width; canvas.height = viewport.height;
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+}
+$('zoomClose').addEventListener('click', () => $('zoomModal').classList.remove('show'));
+$('zoomIn').addEventListener('click', () => { zoomScale = Math.min(zoomScale + 0.3, 4); renderZoom(); });
+$('zoomOut').addEventListener('click', () => { zoomScale = Math.max(zoomScale - 0.3, 0.5); renderZoom(); });
+
+/* ---------- Generic modal helper ---------- */
+function openModal(title, bodyHTML, onConfirm){
+  $('modalTitle').textContent = title;
+  $('modalBody').innerHTML = bodyHTML;
+  $('modalConfirm').textContent = 'Apply';
+  $('modalConfirm').style.display = 'inline-flex';
+  $('modalCancel').textContent = 'Cancel';
+  $('genericModal').classList.add('show');
+  const confirmBtn = $('modalConfirm');
+  const handler = async () => { closeModal(); await onConfirm(); };
+  confirmBtn.onclick = handler;
+}
+function showTextResult(title, text, filename){
+  openModal(title, `
+    <textarea readonly id="resultText" style="width:100%;min-height:220px;font-family:var(--font-mono);font-size:12px;padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);">${(text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</textarea>
+    <button class="btn ghost" id="copyResultBtn" type="button" style="align-self:flex-start;">Copy to clipboard</button>
+  `, async () => {
+    downloadBlob(new Blob([text], {type:'text/plain'}), filename);
+  });
+  $('modalConfirm').textContent = 'Download .txt';
+  setTimeout(() => {
+    const btn = document.getElementById('copyResultBtn');
+    if(btn) btn.addEventListener('click', async () => {
+      try{ await navigator.clipboard.writeText(text); toast('Copied to clipboard.'); }
+      catch{ toast('Could not copy automatically — select the text and copy manually.', true); }
+    });
+  }, 0);
+}
+function closeModal(){ $('genericModal').classList.remove('show'); }
+$('modalClose').addEventListener('click', closeModal);
+$('modalCancel').addEventListener('click', closeModal);
+
+/* ---------- Wire up sidebar tools ---------- */
+$('btnOpen').addEventListener('click', () => $('fileInput').click());
+$('fileInput').addEventListener('change', (e) => { loadFiles(e.target.files); e.target.value=''; });
+
+$('btnInsert').addEventListener('click', () => {
+  openModal('Insert PDF at page…', `
+    <div class="field"><label>PDF file to insert</label><input type="file" id="insFile" accept="application/pdf"></div>
+    <div class="field"><label>Insert before page number</label><input type="number" id="insPos" min="1" value="1"></div>
+    <p class="hint">The inserted file's pages will appear starting at this position. Use a number one greater than the last page to append at the end.</p>
+  `, async () => {
+    const f = document.getElementById('insFile').files[0];
+    const pos = parseInt(document.getElementById('insPos').value) - 1;
+    if(!f){ toast('Choose a file to insert.', true); return; }
+    await insertPdfAt(f, Math.max(0, pos));
+  });
+});
+
+$('btnDuplicateSel').addEventListener('click', () => {
+  const idx = selectedIndices();
+  if(!idx.length){ toast('Select at least one page.', true); return; }
+  duplicatePages(idx);
+});
+$('btnRotateSel').addEventListener('click', () => {
+  const idx = selectedIndices();
+  if(!idx.length){ toast('Select at least one page.', true); return; }
+  rotatePages(idx, 90);
+});
+$('btnReverse').addEventListener('click', () => reverseAll());
+async function reverseAll(){
+  const doc = await PDFDocument.load(workingBytes);
+  await rebuildWithOrder(doc.getPageIndices().slice().reverse(), 'Page order reversed.');
+}
+$('btnDeleteSel').addEventListener('click', () => {
+  const idx = selectedIndices();
+  if(!idx.length){ toast('Select at least one page.', true); return; }
+  if(confirm(`Delete ${idx.length} selected page(s)? This can be undone.`)) deletePages(idx);
+});
+
+$('btnExtract').addEventListener('click', extractSelected);
+
+$('btnSplit').addEventListener('click', () => {
+  openModal('Split into files…', `
+    <div class="radio-row">
+      <label><input type="radio" name="splitMode" value="every" checked> Every N pages</label>
+      <label><input type="radio" name="splitMode" value="ranges"> Custom ranges</label>
+    </div>
+    <div class="field" id="everyField"><label>Pages per file (N)</label><input type="number" id="everyN" min="1" value="1"></div>
+    <div class="field" id="rangesField" style="display:none;">
+      <label>Ranges (e.g. 1-3, 4-4, 5-8)</label>
+      <input type="text" id="rangesInput" placeholder="1-3, 4-4, 5-8">
+    </div>
+    <p class="hint">Downloads a .zip with one PDF per part.</p>
+  `, async () => {
+    const mode = document.querySelector('input[name=splitMode]:checked').value;
+    if(mode === 'every'){
+      const n = parseInt(document.getElementById('everyN').value) || 1;
+      await splitPdf({ mode:'every', everyN:n });
+    } else {
+      const raw = document.getElementById('rangesInput').value;
+      const ranges = raw.split(',').map(s => s.trim()).filter(Boolean).map(s => {
+        const [a,b] = s.split('-').map(x => parseInt(x.trim()));
+        return [a, isNaN(b) ? a : b];
+      });
+      await splitPdf({ mode:'ranges', ranges });
+    }
+  });
+  setTimeout(() => {
+    document.querySelectorAll('input[name=splitMode]').forEach(r => r.addEventListener('change', (e) => {
+      document.getElementById('everyField').style.display = e.target.value === 'every' ? 'block' : 'none';
+      document.getElementById('rangesField').style.display = e.target.value === 'ranges' ? 'block' : 'none';
+    }));
+  }, 0);
+});
+
+$('btnWatermark').addEventListener('click', () => {
+  openModal('Add watermark', `
+    <div class="field"><label>Watermark text</label><input type="text" id="wmText" value="CONFIDENTIAL"></div>
+    <div class="field row">
+      <div><label>Opacity (0.1–1)</label><input type="number" id="wmOpacity" min="0.1" max="1" step="0.1" value="0.25"></div>
+      <div><label>Font size</label><input type="number" id="wmSize" min="10" max="200" value="60"></div>
+    </div>
+  `, async () => {
+    const text = document.getElementById('wmText').value || 'CONFIDENTIAL';
+    const opacity = parseFloat(document.getElementById('wmOpacity').value) || 0.25;
+    const size = parseInt(document.getElementById('wmSize').value) || 60;
+    await addWatermark({ text, opacity, size });
+  });
+});
+
+$('btnPageNum').addEventListener('click', () => {
+  openModal('Add page numbers', `
+    <div class="field"><label>Position</label>
+      <select id="pnPos"><option value="center">Bottom center</option><option value="right">Bottom right</option><option value="left">Bottom left</option></select>
+    </div>
+    <div class="field"><label>Start numbering at</label><input type="number" id="pnStart" min="1" value="1"></div>
+  `, async () => {
+    const position = document.getElementById('pnPos').value;
+    const startNum = parseInt(document.getElementById('pnStart').value) || 1;
+    await addPageNumbers({ position, startNum });
+  });
+});
+
+$('btnCompress').addEventListener('click', () => {
+  openModal('Compress PDF', `
+    <div class="field row">
+      <div><label>JPEG quality</label><input type="number" id="cmpQuality" min="0.3" max="0.95" step="0.05" value="0.7"></div>
+      <div><label>Max image dimension (px)</label><input type="number" id="cmpMaxDim" min="400" max="4000" step="100" value="1600"></div>
+    </div>
+    <p class="hint">Recompresses the embedded photos/scans in this PDF — lower quality and max dimension shrink the file more but soften scanned text and images. Vector text and line art are untouched, so this works best on scanned documents rather than text-only PDFs. Non-JPEG images (a minority in most PDFs) are left as-is.</p>
+  `, async () => {
+    const quality = Math.min(0.95, Math.max(0.3, parseFloat(document.getElementById('cmpQuality').value) || 0.7));
+    const maxDim = Math.min(4000, Math.max(400, parseInt(document.getElementById('cmpMaxDim').value) || 1600));
+    await compressPdf({ quality, maxDim });
+  });
+});
+
+$('btnMetadata').addEventListener('click', async () => {
+  const meta = await getMetadata();
+  openModal('Edit document metadata', `
+    <div class="field"><label>Title</label><input type="text" id="mdTitle" value="${meta.title.replace(/"/g,'&quot;')}"></div>
+    <div class="field"><label>Author</label><input type="text" id="mdAuthor" value="${meta.author.replace(/"/g,'&quot;')}"></div>
+    <div class="field"><label>Subject</label><input type="text" id="mdSubject" value="${meta.subject.replace(/"/g,'&quot;')}"></div>
+    <div class="field"><label>Keywords (comma separated)</label><input type="text" id="mdKeywords" value="${meta.keywords.replace(/"/g,'&quot;')}"></div>
+  `, async () => {
+    await editMetadata({
+      title: document.getElementById('mdTitle').value,
+      author: document.getElementById('mdAuthor').value,
+      subject: document.getElementById('mdSubject').value,
+      keywords: document.getElementById('mdKeywords').value,
+    });
+  });
+});
+
+$('btnOcrImage').addEventListener('click', () => {
+  openModal('Extract text from image', `
+    <div class="field"><label>Image file (JPG, PNG, WEBP, BMP…)</label><input type="file" id="ocrImgFile" accept="image/*"></div>
+    <div class="field"><label>Language</label>
+      <select id="ocrImgLang"><option value="eng">English</option><option value="hin">Hindi</option><option value="eng+hin">English + Hindi</option></select>
+    </div>
+    <p class="hint">Runs entirely in your browser. The first time you use a language, your browser downloads a small recognition model — no document or image content is ever sent anywhere.</p>
+  `, async () => {
+    const file = document.getElementById('ocrImgFile').files[0];
+    const lang = document.getElementById('ocrImgLang').value;
+    if(!file){ toast('Choose an image first.', true); return; }
+    const text = await runOcrOnImageFile(file, lang);
+    if(text !== null){
+      const fname = (file.name.replace(/\.[^.]+$/, '') || 'extracted') + '.txt';
+      showTextResult('Extracted text', text, fname);
+    }
+  });
+});
+
+$('btnOcrPdf').addEventListener('click', () => {
+  openModal('Make this PDF searchable', `
+    <div class="field"><label>Pages</label>
+      <select id="ocrPdfScope"><option value="all">All pages</option><option value="selected">Selected pages only</option></select>
+    </div>
+    <div class="field"><label>Language</label>
+      <select id="ocrPdfLang"><option value="eng">English</option><option value="hin">Hindi</option><option value="eng+hin">English + Hindi</option></select>
+    </div>
+    <p class="hint">Recognizes the text on each page and adds an invisible, selectable text layer — the page looks exactly the same, but becomes searchable and copyable. Works best on clear scans; large files take a little while since every page is processed right here in your browser.</p>
+  `, async () => {
+    const scope = document.getElementById('ocrPdfScope').value;
+    const lang = document.getElementById('ocrPdfLang').value;
+    const doc = await PDFDocument.load(workingBytes);
+    const total = doc.getPageCount();
+    const pageIndices = scope === 'selected' ? selectedIndices() : Array.from({ length: total }, (_, i) => i);
+    if(!pageIndices.length){ toast('No pages to process — select some pages first, or choose "All pages".', true); return; }
+    const results = await runOcrOnPdfPages(lang, pageIndices);
+    if(!results) return;
+    await buildSearchablePdf(results);
+    const fname = ($('outName').value || 'document') + '_ocr.txt';
+    showTextResult('Recognized text', ocrResultsToText(results), fname);
+  });
+});
+
+$('btnPdfToText').addEventListener('click', async () => {
+  setStatus('Extracting text…'); showProgress(20);
+  try{
+    const pages = await getPdfPagesTextItems();
+    const hasText = pages.some(p => p.items.some(it => it.str.trim().length));
+    if(!hasText){ toast('No extractable text layer — this PDF looks scanned. Try "Make this PDF searchable" (OCR) first.', true); return; }
+    const text = pages.map(p => `--- Page ${p.pageIndex+1} ---\n` + groupIntoLines(p.items).map(lineToText).join('\n')).join('\n\n');
+    showTextResult('Extracted text', text, ($('outName').value || 'document') + '.txt');
+  } finally { showProgress(null); }
+});
+
+$('btnPdfToCsv').addEventListener('click', async () => {
+  setStatus('Building CSV…'); showProgress(20);
+  try{
+    const { rows, hasText } = await collectPdfRows();
+    if(!hasText){ toast('No extractable text layer — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    const csv = rows.map(r => r.map(toCsvValue).join(',')).join('\n');
+    downloadBlob(new Blob([csv], { type:'text/csv' }), ($('outName').value || 'document') + '.csv');
+    setStatus('Exported CSV.');
+  } finally { showProgress(null); }
+});
+
+$('btnPdfToExcel').addEventListener('click', async () => {
+  setStatus('Building Excel file…'); showProgress(20);
+  try{
+    const { rows, hasText } = await collectPdfRows();
+    if(!hasText){ toast('No extractable text layer — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    const out = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+    downloadBlob(new Blob([out], { type:'application/octet-stream' }), ($('outName').value || 'document') + '.xlsx');
+    setStatus('Exported Excel file.');
+  } finally { showProgress(null); }
+});
+
+$('btnPdfToWord').addEventListener('click', async () => {
+  setStatus('Building Word document…'); showProgress(20);
+  try{
+    const pages = await getPdfPagesTextItems();
+    const hasText = pages.some(p => p.items.some(it => it.str.trim().length));
+    if(!hasText){ toast('No extractable text layer — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    const pagesLines = pages.map(p => groupIntoLines(p.items).map(lineToText));
+    const bytes = await buildDocxFromPages(pagesLines);
+    downloadBlob(new Blob([bytes], { type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), ($('outName').value || 'document') + '.docx');
+    setStatus('Exported Word document.');
+  } finally { showProgress(null); }
+});
+
+$('btnFileToPdf').addEventListener('click', () => {
+  openModal('Create PDF from file', `
+    <div class="field"><label>File</label><input type="file" id="c2pFile" accept=".docx,.pptx,.xlsx,.xls,.csv,.txt,.md"></div>
+    <p class="hint">Word and text files are laid out as wrapped paragraphs. PowerPoint files become one page per slide (title + bullets). Spreadsheets and CSVs become a table with the first row as a header; long values are truncated to fit the column width. Markdown is treated as plain text — headings aren't styled.</p>
+  `, async () => {
+    const file = document.getElementById('c2pFile').files[0];
+    if(!file){ toast('Choose a file first.', true); return; }
+    await convertFileToPdf(file);
+  });
+});
+
+$('btnTranslateText').addEventListener('click', () => {
+  openModal('Translate text', `
+    <div class="field"><label>Text to translate</label><textarea id="trInput" style="min-height:150px;"></textarea></div>
+    <div class="field row">
+      <div><label>Source language</label><select id="trSource">${langOptions(true)}</select></div>
+      <div><label>Target language</label><select id="trTarget">${langOptions(false)}</select></div>
+    </div>
+    <div class="field"><label>Email (optional — raises the free daily translation limit)</label><input type="text" id="trEmail" placeholder="you@example.com"></div>
+    <p class="hint">Uses the free MyMemory translation service over the internet — the text you translate is sent to it (your other files stay local). Long text is split into chunks automatically. Covers 38 languages known to translate reliably through the free service — including English, Hindi, and India's other major regional languages.</p>
+  `, async () => {
+    const text = document.getElementById('trInput').value.trim();
+    if(!text){ toast('Enter some text to translate.', true); return; }
+    const source = document.getElementById('trSource').value;
+    const target = document.getElementById('trTarget').value;
+    const email = document.getElementById('trEmail').value.trim();
+    setStatus('Translating…'); showProgress(10);
+    try{
+      const translated = await translateFullText(text, source, target, email, (d,t) => showProgress(Math.round((d/t)*100)));
+      showTranslationResult(text, translated, langName(source), langName(target), 'translation');
+      setStatus('Translation complete.');
+    } catch(e){ console.error(e); toast('Translation failed — the free service may be rate-limited. Try again shortly, or add your email above to raise the limit.', true); }
+    finally { showProgress(null); }
+  });
+});
+
+$('btnTranslatePdf').addEventListener('click', () => {
+  openModal('Translate this PDF', `
+    <div class="field row">
+      <div><label>Source language</label><select id="trpSource">${langOptions(true)}</select></div>
+      <div><label>Target language</label><select id="trpTarget">${langOptions(false)}</select></div>
+    </div>
+    <div class="field"><label>Pages</label><select id="trpScope"><option value="all">All pages</option><option value="selected">Selected pages only</option></select></div>
+    <div class="field"><label>Email (optional — raises the free daily translation limit)</label><input type="text" id="trpEmail" placeholder="you@example.com"></div>
+    <p class="hint">Extracts this PDF's text layer and sends it to the free MyMemory translation service. Scanned PDFs have no text layer — run OCR first, then translate.</p>
+  `, async () => {
+    const source = document.getElementById('trpSource').value;
+    const target = document.getElementById('trpTarget').value;
+    const scope = document.getElementById('trpScope').value;
+    const email = document.getElementById('trpEmail').value.trim();
+    const pages = await getPdfPagesTextItems();
+    const hasText = pages.some(p => p.items.some(it => it.str.trim().length));
+    if(!hasText){ toast('No extractable text layer — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    const chosenPages = scope === 'selected' ? pages.filter(p => selected.has(p.pageIndex)) : pages;
+    if(!chosenPages.length){ toast('No pages selected.', true); return; }
+    const text = chosenPages.map(p => `--- Page ${p.pageIndex+1} ---\n` + groupIntoLines(p.items).map(lineToText).join('\n')).join('\n\n');
+    setStatus('Translating PDF text…'); showProgress(10);
+    try{
+      const translated = await translateFullText(text, source, target, email, (d,t) => showProgress(Math.round((d/t)*100)));
+      showTranslationResult(text, translated, langName(source), langName(target), ($('outName').value || 'document') + '_translated');
+      setStatus('Translation complete.');
+    } catch(e){ console.error(e); toast('Translation failed — the free service may be rate-limited. Try again shortly, or add your email above to raise the limit.', true); }
+    finally { showProgress(null); }
+  });
+});
+
+$('btnPdfToPptx').addEventListener('click', async () => {
+  setStatus('Building PowerPoint file…'); showProgress(20);
+  try{
+    const pages = await getPdfPagesTextItems();
+    const hasText = pages.some(p => p.items.some(it => it.str.trim().length));
+    if(!hasText){ toast('No extractable text layer — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    const slides = pages.map(p => {
+      const lines = groupIntoLines(p.items).map(lineToText).filter(l => l.trim().length);
+      return { title: lines[0] || `Page ${p.pageIndex+1}`, bullets: lines.slice(1) };
+    });
+    const bytes = await buildPptxFromSlides(slides);
+    downloadBlob(new Blob([bytes], { type:'application/vnd.openxmlformats-officedocument.presentationml.presentation' }), ($('outName').value || 'document') + '.pptx');
+    setStatus('Exported PowerPoint file.');
+  } catch(e){ console.error(e); toast('Could not build the PowerPoint file.', true); }
+  finally { showProgress(null); }
+});
+
+$('btnUndo').addEventListener('click', undo);
+$('btnRedo').addEventListener('click', redo);
+$('btnReset').addEventListener('click', () => {
+  if(confirm('Reset the project? All pages and history will be cleared.')){
+    workingBytes = null; history = []; historyIndex = -1; selected.clear();
+    setToolsEnabled(false); grid.innerHTML = ''; setStatus('Project reset.');
+  }
+});
+
+$('btnSelectAll').addEventListener('click', () => {
+  Array.from(grid.children).forEach(c => { selected.add(parseInt(c.dataset.index)); c.classList.add('sel'); c.querySelector('input[type=checkbox]').checked = true; });
+});
+$('btnSelectNone').addEventListener('click', () => {
+  selected.clear();
+  Array.from(grid.children).forEach(c => { c.classList.remove('sel'); c.querySelector('input[type=checkbox]').checked = false; });
+});
+$('gotoPage').addEventListener('change', (e) => {
+  const n = parseInt(e.target.value);
+  const card = grid.children[n-1];
+  if(card){ card.scrollIntoView({behavior:'smooth', block:'center'}); card.style.outline='2px solid var(--accent)'; setTimeout(()=>{ if(!selected.has(n-1)) card.style.outline=''; }, 1200); }
+});
+$('btnDownload').addEventListener('click', () => {
+  if(!workingBytes) return;
+  downloadBlob(new Blob([workingBytes], {type:'application/pdf'}), `${$('outName').value || 'document'}.pdf`);
+  setStatus('Downloaded.');
+});
+
+/* ---------- Dropzone ---------- */
+const dz = $('dropzone');
+dz.addEventListener('click', () => $('fileInput').click());
+dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', (e) => { e.preventDefault(); dz.classList.remove('drag'); loadFiles(e.dataTransfer.files); });
+
+/* ---------- Dark mode ---------- */
+const darkPref = localStorage.getItem('pdfworkbench-dark');
+if(darkPref === '1') document.body.classList.add('dark');
+$('darkToggle').addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  localStorage.setItem('pdfworkbench-dark', document.body.classList.contains('dark') ? '1' : '0');
+});
+
+/* ---------- Mobile menu ---------- */
+$('menuToggle').addEventListener('click', () => $('sidebar').classList.toggle('open'));
+
+/* ---------- Keyboard shortcuts ---------- */
+document.addEventListener('keydown', (e) => {
+  if(document.activeElement && ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
+  const ctrl = e.ctrlKey || e.metaKey;
+  if(ctrl && e.key.toLowerCase() === 'z'){ e.preventDefault(); undo(); }
+  else if(ctrl && (e.key.toLowerCase() === 'y')){ e.preventDefault(); redo(); }
+  else if(ctrl && e.key.toLowerCase() === 'a'){ e.preventDefault(); $('btnSelectAll').click(); }
+  else if(ctrl && e.key.toLowerCase() === 's'){ e.preventDefault(); if(workingBytes) $('btnDownload').click(); }
+  else if(ctrl && e.key.toLowerCase() === 'o'){ e.preventDefault(); $('btnOpen').click(); }
+  else if(e.key === 'Delete' && selected.size){ $('btnDeleteSel').click(); }
+});
+
+/* ---------- Init ---------- */
+setToolsEnabled(false);
+</script>
+</body>
+</html>
