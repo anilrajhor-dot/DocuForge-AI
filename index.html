@@ -384,10 +384,11 @@ body.dark .studio-tab.active{color:var(--pine);}
 }
 .reader-toolbar .sep{width:1px; height:20px; background:var(--line);}
 .reader-toolbar select{font-size:12.5px; padding:5px 8px; border:1px solid var(--line); border-radius:4px; background:var(--bg); color:var(--ink);}
-.reader-body{flex:1; overflow-y:auto; position:relative; display:flex; justify-content:center; padding:26px 16px 60px;}
+.reader-body{flex:1; overflow:auto; position:relative; display:flex; justify-content:center; padding:26px 16px 60px; max-height:calc(100vh - 110px);}
 .reader-empty{color:var(--ink-soft); font-size:14px; margin-top:60px; text-align:center; width:100%;}
 .reader-pdf-view{display:flex; justify-content:center;}
-.reader-pdf-view canvas{box-shadow:0 2px 14px rgba(0,0,0,.22); background:#fff;}
+.reader-pdf-view canvas{box-shadow:0 2px 14px rgba(0,0,0,.22); background:#fff; max-width:100%; height:auto; display:block;}
+.reader-pdf-view.zoomed canvas{max-width:none;}
 .reader-epub-view{max-width:680px; width:100%; font-size:17px; line-height:1.75;}
 .reader-epub-view h2{font-family:var(--font-display); margin-bottom:16px; font-size:22px;}
 .reader-epub-view img{max-width:100%; height:auto;}
@@ -559,7 +560,8 @@ body.dark .studio-tab.active{color:var(--pine);}
       <div class="ribbon-panel" data-studio-panel="translate">
 <div class="tool-group">
 <button class="tool-btn" id="btnTranslateText"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 5h9M7 3v2m0 0c0 4-1 7-4 9m4-4c1 2 2.5 3.5 4 4M14 21l4-9 4 9m-6.5-3h5"></path></svg> Translate text…</button>
-<button class="tool-btn" disabled="" id="btnTranslatePdf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"></path><path d="M4 5h9M7 3v2m0 0c0 4-1 7-4 9" transform="translate(1,2) scale(0.55)"></path></svg> Translate this PDF…</button>
+<button class="tool-btn" id="btnTranslateDoc"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"></path><path d="M9 15l3-3 3 3M12 12v7"></path></svg> Translate a document…</button>
+<button class="tool-btn" disabled="" id="btnTranslatePdf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"></path><path d="M4 5h9M7 3v2m0 0c0 4-1 7-4 9" transform="translate(1,2) scale(0.55)"></path></svg> Translate this open PDF</button>
 </div>
 </div>
       <div class="ribbon-panel" data-studio-panel="convert">
@@ -591,6 +593,7 @@ body.dark .studio-tab.active{color:var(--pine);}
 <button class="tool-btn" id="btnPptxMerge"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="13" rx="1" width="18" x="3" y="5"></rect><path d="M8 21h8M3 3l4 5M21 3l-4 5"></path></svg> Merge PPTX files…</button>
 <button class="tool-btn" id="btnPptxSplit"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="13" rx="1" width="8" x="2" y="5"></rect><rect height="13" rx="1" width="8" x="14" y="5"></rect></svg> Split PPTX…</button>
 <button class="tool-btn" id="btnPptxReorder"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg> Reorder slides…</button>
+<button class="tool-btn" id="btnPptxEdit"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z"></path></svg> Edit PowerPoint…</button>
 </div>
 <p class="hint" style="padding:0 14px;margin:6px 0 0;">All PowerPoint tools here are structural, not visual: they work from each slide's extracted title and bullet text, not the original OOXML package. Backgrounds, images, custom layouts, and fonts aren't preserved — the same honest limit as the PDF ⇄ PowerPoint conversion above.</p>
 </div>
@@ -683,8 +686,9 @@ body.dark .studio-tab.active{color:var(--pine);}
       <h3 style="margin-top:18px;font-size:14px;">🖼 OCR &amp; Image Tools</h3>
       <p>Extract text from a photo, make a scanned PDF genuinely searchable (a real invisible text layer, not just a label), pull a table out of an image into CSV/Excel, combine images into a PDF, or export PDF pages as images.</p>
 
+
       <h3 style="margin-top:18px;font-size:14px;">🌍 Translation</h3>
-      <p>Translate pasted text or a whole PDF across 38 languages, side by side. This sends the text you choose (never the file itself) to a translation service — the only exception to "everything stays on your device" besides AI tools.</p>
+      <p>Translate pasted text, an uploaded PDF/DOCX/TXT/MD file directly, or whatever PDF is currently open in the editor — across 38 languages, side by side. This sends the text you choose (never the file itself) to a translation service — the only exception to "everything stays on your device" besides AI tools.</p>
 
       <h3 style="margin-top:18px;font-size:14px;">🔄 Document Conversion</h3>
       <p>PDF to and from Word, Excel, CSV, HTML, JSON, XML, RTF, ODT/ODS/ODP, EPUB, and images. These carry over structure and text, not always exact original formatting — that's an honest limit of any browser-only conversion, not just this one.</p>
@@ -3069,6 +3073,7 @@ async function renderReaderPdfPage(){
     const container = $('readerPdfView');
     container.innerHTML = '';
     container.appendChild(canvas);
+    container.classList.toggle('zoomed', readerPdfZoom > 1.3);
     $('readerPageIndicator').textContent = `Page ${readerPdfCurrentPage} / ${readerPdfPageCount}`;
     $('readerZoomLevel').textContent = Math.round((readerPdfZoom / 1.3) * 100) + '%';
     readerSaveProgress();
@@ -3711,6 +3716,62 @@ $('btnPptxReorder').addEventListener('click', () => {
   }, 0);
 });
 
+function pptxSlideEditorBlock(slide){
+  const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  const div = document.createElement('div');
+  div.className = 'pptx-edit-slide';
+  div.style.cssText = 'border:1px solid var(--line);border-radius:4px;padding:10px;background:var(--surface);cursor:grab;';
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span class="mono" style="font-size:11px;color:var(--ink-soft);">⠿ Drag to reorder</span>
+      <button class="pptx-del-slide" type="button" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">Delete</button>
+    </div>
+    <input type="text" class="pptx-slide-title" value="${esc(slide.title)}" placeholder="Slide title" style="width:100%;margin-bottom:6px;font-weight:600;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);">
+    <textarea class="pptx-slide-bullets" placeholder="One bullet per line" style="width:100%;min-height:70px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);font-size:12.5px;">${esc((slide.bullets || []).join('\n'))}</textarea>
+  `;
+  div.querySelector('.pptx-del-slide').addEventListener('click', () => div.remove());
+  return div;
+}
+$('btnPptxEdit').addEventListener('click', () => {
+  openModal('Edit PowerPoint', `
+    <div class="field"><label>PPTX file (optional — leave blank to start a new deck)</label><input type="file" id="pptxEditFile" accept=".pptx"></div>
+    <div id="pptxEditSlides" style="display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto;"></div>
+    <button class="btn ghost" id="pptxAddSlide" type="button" style="align-self:flex-start;">+ Add slide</button>
+    <p class="hint">Edit each slide's title and bullets (one per line), add or delete slides, or drag to reorder. Structural rebuild — same honest limit as other PowerPoint tools here: original design isn't preserved.</p>
+  `, async () => {
+    const container = document.getElementById('pptxEditSlides');
+    if(!container || !container.children.length){ toast('Add at least one slide first.', true); return; }
+    const slides = Array.from(container.children).map(div => ({
+      title: div.querySelector('.pptx-slide-title').value || 'Untitled slide',
+      bullets: div.querySelector('.pptx-slide-bullets').value.split('\n').map(s => s.trim()).filter(Boolean),
+    }));
+    setStatus('Rebuilding presentation…'); showProgress(20);
+    try{
+      const bytes = await buildPptxFromSlides(slides);
+      downloadBlob(new Blob([bytes], { type:'application/vnd.openxmlformats-officedocument.presentationml.presentation' }), 'edited.pptx');
+      setStatus('Presentation saved.');
+      logConversion('Edited PowerPoint', 'edited.pptx');
+    } catch(e){ console.error(e); toast('Could not rebuild the presentation.', true); }
+    finally { showProgress(null); }
+  });
+  setTimeout(() => {
+    const container = document.getElementById('pptxEditSlides');
+    Sortable.create(container, { animation:150 });
+    document.getElementById('pptxEditFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      try{
+        const slides = await extractPptxSlidesData(file);
+        container.innerHTML = '';
+        slides.forEach(s => container.appendChild(pptxSlideEditorBlock(s)));
+      } catch(err){ console.error(err); toast('Could not read that file.', true); }
+    });
+    document.getElementById('pptxAddSlide').addEventListener('click', () => {
+      container.appendChild(pptxSlideEditorBlock({ title: 'New slide', bullets: [] }));
+    });
+  }, 0);
+});
+
 $('btnFileToPdf').addEventListener('click', () => {
   openModal('Create PDF from file', `
     <div class="field"><label>File</label><input type="file" id="c2pFile" accept=".docx,.pptx,.xlsx,.xls,.csv,.txt,.md,.html,.htm"></div>
@@ -3743,6 +3804,60 @@ $('btnTranslateText').addEventListener('click', () => {
       showTranslationResult(text, translated, langName(source), langName(target), 'translation');
       setStatus('Translation complete.');
     } catch(e){ console.error(e); toast('Translation failed — the free service may be rate-limited. Try again shortly, or add your email above to raise the limit.', true); }
+    finally { showProgress(null); }
+  });
+});
+
+async function extractTextFromAnyFile(file){
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if(ext === 'pdf'){
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+    const parts = [];
+    for(let i = 1; i <= pdf.numPages; i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const items = content.items.filter(it => typeof it.str === 'string')
+        .map(it => ({ str: it.str, x: it.transform[4], y: it.transform[5], width: it.width || 0 }));
+      parts.push(`--- Page ${i} ---\n` + groupIntoLines(items).map(lineToText).join('\n'));
+    }
+    const joined = parts.join('\n\n');
+    if(!joined.replace(/---.*?---/g, '').trim()) throw new Error('No extractable text layer — this PDF looks scanned. Run OCR first, then try again.');
+    return joined;
+  } else if(ext === 'docx'){
+    await loadLib('mammoth');
+    const buf = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer: buf });
+    return result.value;
+  } else if(['txt','md'].includes(ext)){
+    return await file.text();
+  }
+  throw new Error('Unsupported file type — use PDF, DOCX, TXT, or MD.');
+}
+$('btnTranslateDoc').addEventListener('click', () => {
+  openModal('Translate a document', `
+    <div class="field"><label>File (PDF, DOCX, TXT, or MD)</label><input type="file" id="trDocFile" accept=".pdf,.docx,.txt,.md"></div>
+    <div class="field row">
+      <div><label>Source language</label><select id="trDocSource">${langOptions(true)}</select></div>
+      <div><label>Target language</label><select id="trDocTarget">${langOptions(false)}</select></div>
+    </div>
+    <div class="field"><label>Email (optional — raises the free daily translation limit)</label><input type="text" id="trDocEmail" placeholder="you@example.com"></div>
+    <p class="hint">Extracts the file's text and sends it to the free MyMemory translation service. Scanned PDFs have no text layer — OCR Studio can fix that first.</p>
+  `, async () => {
+    const file = document.getElementById('trDocFile').files[0];
+    if(!file){ toast('Choose a file first.', true); return; }
+    const source = document.getElementById('trDocSource').value;
+    const target = document.getElementById('trDocTarget').value;
+    const email = document.getElementById('trDocEmail').value.trim();
+    setStatus('Reading document…'); showProgress(10);
+    try{
+      const text = await extractTextFromAnyFile(file);
+      if(!text.trim()){ toast('No text found in that file.', true); return; }
+      setStatus('Translating…');
+      const translated = await translateFullText(text, source, target, email, (d,t) => showProgress(Math.round((d/t)*100)));
+      showTranslationResult(text, translated, langName(source), langName(target), file.name.replace(/\.[^.]+$/, '') + '_translated');
+      setStatus('Translation complete.');
+    } catch(e){ console.error(e); toast(e.message || 'Translation failed.', true); }
     finally { showProgress(null); }
   });
 });
@@ -5042,7 +5157,7 @@ const HELP_FAQ = [
   { q: ['split'], a: 'PDF Studio → Extract & split → "Split into files…" — by page ranges or every N pages, downloads as a .zip.' },
   { q: ['compress','reduce size','file size','smaller'], a: 'PDF Studio → Enhance → "Compress" — recompresses embedded JPEGs. Works best on scanned/photo-heavy PDFs; text-only PDFs won\u2019t shrink much.' },
   { q: ['ocr','scan','searchable'], a: 'OCR Studio → "Make this PDF searchable…" — adds a real, invisible text layer so scans become searchable and copyable.' },
-  { q: ['translate'], a: 'Translation Studio → "Translate text…" or "Translate this PDF…". Covers 38 languages. This sends the text you choose (never the file) to a translation service.' },
+  { q: ['translate'], a: 'Translation Studio → "Translate text…" (paste), "Translate a document…" (upload PDF/DOCX/TXT/MD directly), or "Translate this open PDF" (whatever\u2019s loaded in the editor). Covers 38 languages. Sends the text you choose (never the file) to a translation service.' },
   { q: ['word','docx'], a: 'Conversion Studio → "PDF → Word (.docx)" — needs a real text layer; scanned PDFs need OCR first.' },
   { q: ['excel','xlsx','spreadsheet'], a: 'Conversion Studio → "PDF → Excel" for tables inside a PDF, or Spreadsheet Studio → "Excel / CSV → Chart…" to visualize spreadsheet data you already have.' },
   { q: ['password','protect','encrypt'], a: 'Security Studio → "Set password (beta)…" — real encryption, but a less battle-tested library than the rest of the app. Verify the output opens correctly before relying on it.' },
@@ -5060,7 +5175,7 @@ const HELP_FAQ = [
   { q: ['interest','bank statement'], a: 'Spreadsheet Studio → "Bank interest calculator…" reads a statement (PDF, Excel, or CSV) and calculates period-by-period interest from the daily closing balance and the rate you give it.' },
   { q: ['digitize','chart image','extract chart'], a: 'Spreadsheet Studio → "Digitize chart image…" — calibrate two known axis points, then click each data point; no software can read an arbitrary chart automatically.' },
   { q: ['website','generate site'], a: 'Website Studio → "Generate a website…" — describe your site, get a complete single-file HTML site to preview, download, and deploy the same way as this app.' },
-  { q: ['powerpoint','pptx','ppt','slide'], a: 'PowerPoint Studio: convert PDF ⇄ PowerPoint, merge several .pptx files, split one into parts, or drag to reorder slides. All structural — titles and bullets carry over, original design doesn\u2019t.' },
+  { q: ['powerpoint','pptx','ppt','slide'], a: 'PowerPoint Studio: convert PDF ⇄ PowerPoint, edit slide titles/bullets directly, add or delete slides, merge several .pptx files, split one into parts, or drag to reorder slides. All structural — titles and bullets carry over, original design doesn\u2019t.' },
   { q: ['recent','continue project'], a: 'The Dashboard tab shows Recent Files and lets you continue your last project — stored locally on this device via IndexedDB.' },
 ];
 function matchFaq(question){
