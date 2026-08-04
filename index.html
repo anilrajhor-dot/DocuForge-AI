@@ -774,7 +774,7 @@ body.dark .studio-tab.active{color:var(--pine);}
     <div id="aboutStudio" class="studio-page">
       <h2>About DocuForge AI</h2>
       <div style="background:var(--surface-2);padding:10px 14px;border-radius:4px;margin-bottom:16px;font-family:var(--font-mono);font-size:12px;">
-        <strong>Build:</strong> 2026-08-04.2 &mdash; if this doesn't match what you expect right after uploading a new version, your browser is showing a cached copy: try closing and reopening the tab, a hard refresh, or clearing Safari's site cache.
+        <strong>Build:</strong> 2026-08-04.3 &mdash; if this doesn't match what you expect right after uploading a new version, your browser is showing a cached copy: try closing and reopening the tab, a hard refresh, or clearing Safari's site cache.
       </div>
       <p>A privacy-first document toolkit that runs entirely in your browser &mdash; PDF editing, OCR, conversion, translation, and AI-assisted tools, with no backend and no document ever uploaded anywhere.</p>
       <p><strong>The two exceptions:</strong> <em>Translate</em> and <em>AI Assistant</em> send only the text you choose to a translation service or to the AI provider you supply your own key for &mdash; never your files, and never through any server of ours.</p>
@@ -5343,11 +5343,32 @@ function computeStats(data){
    and amounts from real bank statements come in all sorts of formats,
    so both parsers are deliberately permissive rather than assuming one
    fixed layout. */
+const MONTH_ABBR = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
 function parseFlexibleDate(str){
   str = String(str || '').trim();
   if(!str) return null;
   let m = str.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
   if(m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  // DD-MMM-YYYY / DD MMM YYYY / DD-MMM-YY (very common in Indian bank statements)
+  m = str.match(/^(\d{1,2})[\s\-\/]([A-Za-z]{3,9})[\s\-\/](\d{2,4})/);
+  if(m){
+    const mon = MONTH_ABBR[m[2].slice(0,3).toLowerCase()];
+    if(mon !== undefined){
+      let y = m[3];
+      if(y.length === 2) y = (parseInt(y) > 50 ? '19' : '20') + y;
+      return new Date(+y, mon, parseInt(m[1]));
+    }
+  }
+  // MMM DD, YYYY / MMM DD YYYY
+  m = str.match(/^([A-Za-z]{3,9})[\s\-]?(\d{1,2}),?[\s\-](\d{2,4})/);
+  if(m){
+    const mon = MONTH_ABBR[m[1].slice(0,3).toLowerCase()];
+    if(mon !== undefined){
+      let y = m[3];
+      if(y.length === 2) y = (parseInt(y) > 50 ? '19' : '20') + y;
+      return new Date(+y, mon, parseInt(m[2]));
+    }
+  }
   m = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
   if(m){
     let [, d, mo, y] = m;
@@ -6013,7 +6034,12 @@ $('btnInterestCalc').addEventListener('click', () => {
     const headerIdx = window.__intHeaderIdx || 0;
     const body = rows.slice(headerIdx + 1);
     const result = computeInterestFromStatement(body, dateIdx, balIdx, rate);
-    if(!result.monthly.length){ toast('Could not compute — check the date/balance columns are right, the header row is correct, and there\u2019s at least 1 dated entry.', true); return; }
+    if(!result.monthly.length){
+      const sampleDates = body.slice(0, 3).map(r => JSON.stringify(r[dateIdx])).join(', ');
+      const sampleBals = body.slice(0, 3).map(r => JSON.stringify(r[balIdx])).join(', ');
+      toast(`Could not compute — no rows had both a valid date and balance. Raw date values seen: ${sampleDates}. Raw balance values seen: ${sampleBals}. Check the column and header row choices.`, true);
+      return;
+    }
     showInterestResult(result, rate);
   });
   setTimeout(() => {
