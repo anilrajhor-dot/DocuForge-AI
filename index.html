@@ -773,9 +773,12 @@ body.dark .studio-tab.active{color:var(--pine);}
 
     <div id="aboutStudio" class="studio-page">
       <h2>About DocuForge AI</h2>
+      <div style="background:var(--surface-2);padding:10px 14px;border-radius:4px;margin-bottom:16px;font-family:var(--font-mono);font-size:12px;">
+        <strong>Build:</strong> 2026-08-04.2 &mdash; if this doesn't match what you expect right after uploading a new version, your browser is showing a cached copy: try closing and reopening the tab, a hard refresh, or clearing Safari's site cache.
+      </div>
       <p>A privacy-first document toolkit that runs entirely in your browser &mdash; PDF editing, OCR, conversion, translation, and AI-assisted tools, with no backend and no document ever uploaded anywhere.</p>
       <p><strong>The two exceptions:</strong> <em>Translate</em> and <em>AI Assistant</em> send only the text you choose to a translation service or to the AI provider you supply your own key for &mdash; never your files, and never through any server of ours.</p>
-      <p><strong>What's not supported in this edition:</strong> password-protected PDFs and cryptographic digital signatures. Certificate-based signing genuinely requires a certificate authority — no way around that in a browser tool. Encryption is more nuanced: the well-established library this app is built on doesn't include it, though community forks that add AES-256 encryption do exist. They're less battle-tested than the core library everything else here relies on, which is a bigger deal for a security feature than for most others — so it's left out for now rather than shipped on a foundation that hasn't been vetted as carefully as the rest of this app.</p>
+      <p><strong>What's not supported in this edition:</strong> cryptographic digital signatures &mdash; that genuinely requires a certificate authority, no way around it in a browser tool. Password protection (both setting one and opening an existing password-protected PDF) is supported, but marked beta: it runs on a community-maintained fork of the core library, not the well-established one everything else here relies on.</p>
       <p class="hint">Developed by Anil Sharma, Former General Manager, Central Bank of India.</p>
     </div>
 
@@ -5493,14 +5496,23 @@ function showChartResult(labels, data, type, seriesLabel){
       if(existing) existing.destroy();
       const ctx = canvasEl.getContext('2d');
       const palette = ['#B65C1F','#113B34','#4B5750','#A3341E','#1B4F45','#C7B08A','#7A8B84','#D97757','#5F9E8A','#E08A45'];
+      const multiSlice = ['pie','doughnut','polarArea','radar'].includes(type);
+      const chartJsType = type === 'hbar' ? 'bar' : type === 'area' ? 'line' : type;
       new Chart(ctx, {
-        type,
-        data: { labels, datasets: [{ label: seriesLabel, data, backgroundColor: type === 'pie' ? labels.map((_,i) => palette[i % palette.length]) : '#B65C1F', borderColor:'#113B34', borderWidth: type === 'line' ? 2 : 1 }] },
+        type: chartJsType,
+        data: { labels, datasets: [{
+          label: seriesLabel, data,
+          backgroundColor: multiSlice ? labels.map((_,i) => palette[i % palette.length]) : (type === 'area' ? 'rgba(182,92,31,0.25)' : '#B65C1F'),
+          borderColor: type === 'radar' ? '#B65C1F' : '#113B34',
+          borderWidth: (type === 'line' || type === 'area') ? 2 : 1,
+          fill: type === 'area',
+        }] },
         options: {
+          indexAxis: type === 'hbar' ? 'y' : 'x',
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: type === 'pie' },
+            legend: { display: multiSlice },
             tooltip: {
               enabled: true,
               callbacks: { label: (item) => `${item.label}: ${item.formattedValue}` },
@@ -5597,8 +5609,9 @@ $('btnExcelChart').addEventListener('click', () => {
       toast('Every value in that column is 0 — this is almost certainly the wrong column. Check the sample values shown in the Y-axis dropdown and pick one with real numbers.', true);
       return;
     }
-    if(type === 'pie' && labels.length > 20){
-      toast(`Pie charts don\u2019t work with ${labels.length} categories — showing as a bar chart instead.`, false);
+    const pieLikeTypes = ['pie', 'doughnut', 'polarArea', 'radar'];
+    if(pieLikeTypes.includes(type) && labels.length > 20){
+      toast(`This chart type doesn\u2019t work with ${labels.length} categories — showing as a bar chart instead.`, false);
       type = 'bar';
     }
     showChartResult(labels, data, type, String(rows[0][yIdx] ?? 'Value'));
@@ -5639,7 +5652,7 @@ $('btnExcelChart').addEventListener('click', () => {
             <div><label>X-axis (labels)</label><select id="chartX">${headers.map((h,i) => `<option value="${i}" ${i === bestXIdx ? 'selected' : ''}>${escapeXml(optLabel(h,i))}</option>`).join('')}</select></div>
             <div><label>Y-axis (values)</label><select id="chartY">${headers.map((h,i) => `<option value="${i}" ${i === bestYIdx ? 'selected' : ''}>${escapeXml(optLabel(h,i))}</option>`).join('')}</select></div>
           </div>
-          <div class="field"><label>Chart type</label><select id="chartType"><option value="bar">Bar</option><option value="line">Line</option><option value="pie">Pie</option></select></div>
+          <div class="field"><label>Chart type</label><select id="chartType"><option value="bar">Bar (vertical)</option><option value="hbar">Bar (horizontal)</option><option value="line">Line</option><option value="area">Area (filled line)</option><option value="pie">Pie</option><option value="doughnut">Doughnut</option><option value="radar">Radar</option><option value="polarArea">Polar area</option></select></div>
         `;
       } catch(err){ console.error(err); toast('Could not read that spreadsheet.', true); }
     });
