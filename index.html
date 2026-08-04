@@ -5997,9 +5997,10 @@ $('btnInterestCalc').addEventListener('click', () => {
     const balIdx = parseInt(document.getElementById('intBalCol').value);
     const rate = parseFloat(document.getElementById('intRate').value);
     if(isNaN(rate)){ toast('Enter a valid interest rate.', true); return; }
-    const body = rows.slice(1);
+    const headerIdx = window.__intHeaderIdx || 0;
+    const body = rows.slice(headerIdx + 1);
     const result = computeInterestFromStatement(body, dateIdx, balIdx, rate);
-    if(!result.monthly.length){ toast('Could not compute — check the date/balance columns are right and there\u2019s at least 1 dated entry.', true); return; }
+    if(!result.monthly.length){ toast('Could not compute — check the date/balance columns are right, the header row is correct, and there\u2019s at least 1 dated entry.', true); return; }
     showInterestResult(result, rate);
   });
   setTimeout(() => {
@@ -6015,15 +6016,38 @@ $('btnInterestCalc').addEventListener('click', () => {
       }
       return rows;
     }
-    function populateColumnPickers(rows){
-      window.__intRows = rows;
-      const headers = rows[0];
+    function detectHeaderRowIndex(rows){
+      // PDFs of bank statements often have letterhead/account-summary lines
+      // before the real table starts, and those lines extract as a single
+      // cell. Row 0 is rarely the real header — the row with the most
+      // columns usually is, so use that instead of blindly trusting row 0.
+      let bestIdx = 0, bestCount = (rows[0] || []).length;
+      const scanLimit = Math.min(rows.length, 30);
+      for(let i = 0; i < scanLimit; i++){
+        const len = (rows[i] || []).length;
+        if(len > bestCount){ bestCount = len; bestIdx = i; }
+      }
+      return bestIdx;
+    }
+    function renderColumnSelectors(rows, headerIdx){
+      window.__intHeaderIdx = headerIdx;
+      const headers = rows[headerIdx] || [];
       document.getElementById('intColumnsArea').innerHTML = `
+        <div class="field"><label>Header row (auto-detected — change the number if the columns below look wrong)</label><input type="number" id="intHeaderRow" min="1" value="${headerIdx + 1}"></div>
         <div class="field row">
           <div><label>Date column</label><select id="intDateCol">${headers.map((h,i) => `<option value="${i}">${escapeXml(String(h))}</option>`).join('')}</select></div>
           <div><label>Balance column</label><select id="intBalCol">${headers.map((h,i) => `<option value="${i}" ${i === headers.length-1 ? 'selected' : ''}>${escapeXml(String(h))}</option>`).join('')}</select></div>
         </div>
       `;
+      document.getElementById('intHeaderRow').addEventListener('change', (e) => {
+        const newIdx = Math.max(0, (parseInt(e.target.value) || 1) - 1);
+        if(newIdx >= rows.length){ toast('That row number is beyond the end of the file.', true); return; }
+        renderColumnSelectors(rows, newIdx);
+      });
+    }
+    function populateColumnPickers(rows){
+      window.__intRows = rows;
+      renderColumnSelectors(rows, detectHeaderRowIndex(rows));
     }
     document.getElementById('intSource').addEventListener('change', async (e) => {
       document.getElementById('intUploadField').style.display = e.target.value === 'upload' ? 'block' : 'none';
