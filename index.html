@@ -14,11 +14,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 
 <style>
 /* ============ Design tokens ============
@@ -61,6 +56,23 @@ body.dark{
   --focus:#7FBFA8;
   --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
 }
+body.high-contrast{
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface-2:#EDEDED; --ink:#000000; --ink-soft:#000000;
+  --line:#000000; --accent:#0000CC; --accent-ink:#FFFFFF; --pine:#000000; --pine-soft:#000000;
+  --danger:#B00000; --focus:#0000CC;
+}
+body.high-contrast.dark{
+  --bg:#000000; --surface:#000000; --surface-2:#1A1A1A; --ink:#FFFFFF; --ink-soft:#FFFFFF;
+  --line:#FFFFFF; --accent:#FFD400; --accent-ink:#000000; --pine:#FFFFFF; --pine-soft:#FFFFFF;
+  --danger:#FF6B6B; --focus:#FFD400;
+}
+body.high-contrast .tool-btn, body.high-contrast .btn, body.high-contrast .ribbon-btn,
+body.high-contrast input, body.high-contrast select, body.high-contrast textarea,
+body.high-contrast .page-card, body.high-contrast .modal, body.high-contrast .toolbar{
+  border-width:2px !important;
+}
+body.large-text #appView, body.large-text #landingPage{ zoom:1.18; }
+
 *{box-sizing:border-box;}
 html,body{height:100%;}
 body{
@@ -309,7 +321,7 @@ body.dark .studio-tab.active{color:var(--pine);}
   padding:6px 4px; font-size:10px; text-align:center; white-space:normal; line-height:1.2;
   min-height:54px; margin-bottom:0;
 }
-.ribbon .tool-btn svg, .ribbon-quick .tool-btn svg{width:18px; height:18px;}
+.ribbon .tool-btn svg, .ribbon-quick .tool-btn svg{width:21px; height:21px;}
 .ribbon .tool-btn kbd, .ribbon-quick .tool-btn kbd{display:none;}
 .ribbon .hint{width:100%; padding:4px 2px 0; margin:0; font-size:10px;}
 
@@ -366,9 +378,28 @@ body.dark .studio-tab.active{color:var(--pine);}
 .dash-tile:hover{border-color:var(--accent); transform:translateY(-1px);}
 .dash-tile .dt-icon{font-size:22px;}
 
+.recent-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px;
+  background:var(--surface); border:1px solid var(--line); border-radius:5px; font-size:12.5px;
+}
+.recent-row .rr-main{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;}
+.recent-row .rr-meta{color:var(--ink-soft); font-family:var(--font-mono); font-size:11px; flex-shrink:0;}
+.recent-row button.rr-open{background:transparent; border:none; color:var(--pine); font-weight:600; cursor:pointer; font-size:12px; flex-shrink:0;}
+.recent-row button.rr-delete{background:transparent; border:none; color:var(--ink-soft); cursor:pointer; font-size:14px; flex-shrink:0; padding:0 2px;}
+.recent-empty{color:var(--ink-soft); font-size:12.5px; padding:8px 0;}
+.continue-banner{
+  display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 18px;
+  background:var(--pine); color:#F4F2EA; border-radius:6px; box-shadow:var(--shadow);
+}
+.continue-banner button{
+  background:var(--accent); color:var(--accent-ink); border:none; padding:8px 16px; border-radius:4px;
+  font-weight:700; font-size:12.5px; cursor:pointer;
+}
+
 @media (max-width:820px){
   .landing-hero h1{font-size:26px;}
   .landing-hero{padding:44px 16px 30px;}
+  #dashboardRecent > div[style*="grid-template-columns"]{grid-template-columns:1fr !important;}
 }
 </style>
 </head>
@@ -384,16 +415,17 @@ body.dark .studio-tab.active{color:var(--pine);}
   <div style="padding:40px 20px 50px;">
     <div class="feature-grid">
       <div class="feature-card"><span class="fc-icon">📄</span><h3>PDF Tools</h3><p>Merge, split, rotate, crop, reorder, watermark, page numbers, headers/footers, forms, compress.</p></div>
-      <div class="feature-card"><span class="fc-icon">🖼</span><h3>OCR &amp; Image Tools</h3><p>Make scans searchable, extract text from photos, pull tables from images, build PDFs from images.</p></div>
+      <div class="feature-card"><span class="fc-icon">🖼</span><h3>OCR &amp; Image Tools</h3><p>Add a real, embedded searchable text layer to scans; extract text from photos, pull tables from images, build PDFs from images.</p></div>
       <div class="feature-card"><span class="fc-icon">🌍</span><h3>Translation</h3><p>Translate text or whole PDFs across 38 languages, side by side, exportable in four formats.</p></div>
-      <div class="feature-card"><span class="fc-icon">🔄</span><h3>Document Conversion</h3><p>PDF ⇄ Word, Excel, PowerPoint, CSV, HTML, JSON, images &mdash; and back again.</p></div>
-      <div class="feature-card"><span class="fc-icon">🤖</span><h3>AI Assistant</h3><p>Summarize, rewrite, simplify, extract action items and dates &mdash; using your own API key.</p></div>
+      <div class="feature-card"><span class="fc-icon">🔄</span><h3>Document Conversion</h3><p>Convert PDF content into editable Word, Excel, PowerPoint, CSV, HTML, JSON, and images &mdash; and back again. Structure and text carry over; exact original formatting may not.</p></div>
+      <div class="feature-card"><span class="fc-icon">🤖</span><h3>AI Assistant</h3><p>Summarize, rewrite, simplify, chat with a PDF, extract action items and dates &mdash; using your own API key.</p></div>
       <div class="feature-card"><span class="fc-icon">📊</span><h3>Spreadsheet Tools</h3><p>Turn a spreadsheet or CSV straight into a chart, no other software needed.</p></div>
-      <div class="feature-card"><span class="fc-icon">🔐</span><h3>Security</h3><p>Visual signature stamps, form fill &amp; flatten. (Real encryption isn't possible in a browser tool &mdash; see below.)</p></div>
+      <div class="feature-card"><span class="fc-icon">🔐</span><h3>Security</h3><p>Visual signature stamps, form fill &amp; flatten. Password-protected PDFs aren't currently supported &mdash; see below for why.</p></div>
       <div class="feature-card"><span class="fc-icon">📂</span><h3>Batch Processing</h3><p>Run one operation across many files at once and download everything as a single .zip.</p></div>
     </div>
+    <p class="hint" style="max-width:640px;margin:0 auto 8px;text-align:center;">Most PDF tools activate once you open a PDF in the editor &mdash; that's why some buttons start out greyed&nbsp;out.</p>
     <div class="landing-privacy">
-      <strong>Privacy, plainly:</strong> every tool above runs entirely on your device — nothing is uploaded. The only two exceptions are <strong>Translate</strong> and <strong>AI Assistant</strong>, which send just the text you choose (never your files) to a translation service or to the AI provider you supply your own key for. Nothing else ever leaves your browser.
+      <strong>Privacy, plainly:</strong> except when you explicitly use <strong>Translate</strong> or the <strong>AI Assistant</strong>, all document processing happens entirely inside your browser &mdash; nothing is uploaded anywhere. Translate and AI Assistant send only the extracted text you choose to process, never your original file, to a translation service or to the AI provider you supply your own key for.
     </div>
   </div>
   <div class="app-footer">
@@ -526,7 +558,8 @@ body.dark .studio-tab.active{color:var(--pine);}
 <button class="tool-btn" disabled="" id="btnSign"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M3 17c2-4 3-2 5-6s2 3 4-1 3 2 5-2M4 21h16"></path></svg> Sign PDF…</button>
 <button class="tool-btn" disabled="" id="btnFillForm"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><path d="M7 9h10M7 13h6"></path></svg> Fill form fields…</button>
 <button class="tool-btn" disabled="" id="btnFlattenForm"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><path d="M7 14l3 3 7-8"></path></svg> Flatten form</button>
-<p class="hint" style="padding:0 14px;margin:6px 0 0;">Real password encryption isn't possible in a browser-only tool — there's no PDF-encryption library that runs client-side, so it's left out rather than faked.</p>
+<button class="tool-btn" disabled id="btnEncrypt"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 018 0v4"></path></svg> Set password (beta)…</button>
+<p class="hint" style="padding:0 14px;margin:6px 0 0;">Password protection uses a community fork of the core PDF library, not the well-established one the rest of this app relies on — test that your protected file actually opens with the password before trusting it for anything sensitive. Cryptographic digital signatures still aren't supported; that genuinely requires a certificate authority.</p>
 </div>
 </div>
       <div class="ribbon-panel" data-studio-panel="batch">
@@ -544,6 +577,12 @@ body.dark .studio-tab.active{color:var(--pine);}
 <button class="tool-btn danger" id="btnClearAllData">Clear all local settings</button>
 </div>
 </div>
+      <h2 style="margin-top:22px;">Accessibility</h2>
+      <div class="tool-group" style="flex-direction:column; align-items:flex-start; gap:10px;">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;"><input type="checkbox" id="toggleHighContrast" style="width:auto;"> High contrast mode</label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;"><input type="checkbox" id="toggleLargeText" style="width:auto;"> Larger text &amp; UI</label>
+        <button class="tool-btn" id="btnShowShortcuts" style="width:auto;">Keyboard shortcuts…</button>
+      </div>
     </div>
 
     <div id="readerStudio" class="reader-page">
@@ -574,7 +613,7 @@ body.dark .studio-tab.active{color:var(--pine);}
       <h2>About DocuForge AI</h2>
       <p>A privacy-first document toolkit that runs entirely in your browser &mdash; PDF editing, OCR, conversion, translation, and AI-assisted tools, with no backend and no document ever uploaded anywhere.</p>
       <p><strong>The two exceptions:</strong> <em>Translate</em> and <em>AI Assistant</em> send only the text you choose to a translation service or to the AI provider you supply your own key for &mdash; never your files, and never through any server of ours.</p>
-      <p><strong>What can't be done in a browser tool, honestly:</strong> real PDF password encryption (no client-side encryption library exists for this) and cryptographic digital signatures (require a certificate authority). Both are left out rather than faked.</p>
+      <p><strong>What's not supported in this edition:</strong> password-protected PDFs and cryptographic digital signatures. Certificate-based signing genuinely requires a certificate authority — no way around that in a browser tool. Encryption is more nuanced: the well-established library this app is built on doesn't include it, though community forks that add AES-256 encryption do exist. They're less battle-tested than the core library everything else here relies on, which is a bigger deal for a security feature than for most others — so it's left out for now rather than shipped on a foundation that hasn't been vetted as carefully as the rest of this app.</p>
       <p class="hint">Developed by Anil Sharma, Former General Manager, Central Bank of India.</p>
     </div>
 
@@ -591,6 +630,19 @@ body.dark .studio-tab.active{color:var(--pine);}
       <button class="dash-tile" data-tool="btnImagesToPdf"><span class="dt-icon">🖼️</span><span>Image → PDF</span></button>
       <button class="dash-tile" data-tool="btnAiTools"><span class="dt-icon">🤖</span><span>AI Summarizer</span></button>
       <button class="dash-tile" data-tool="btnBatch"><span class="dt-icon">📂</span><span>Batch Processing</span></button>
+    </div>
+    <div id="dashboardRecent" style="display:none;">
+      <div id="continueProjectArea" style="margin-bottom:18px;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div>
+          <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);font-family:var(--font-mono);margin-bottom:8px;">Recent files</h3>
+          <div id="recentFilesList" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+        <div>
+          <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);font-family:var(--font-mono);margin-bottom:8px;">Recent conversions</h3>
+          <div id="recentConversionsList" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+      </div>
     </div>
     <div class="toolbar" id="toolbar" style="display:none;">
       <input type="text" class="file-stat" id="outName" style="width:170px;font-weight:600;color:var(--ink);" value="document" aria-label="Output file name">
@@ -661,6 +713,126 @@ body.dark .studio-tab.active{color:var(--pine);}
 const { PDFDocument, degrees, rgb, StandardFonts } = PDFLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
+/* ---------- Lazy library loading ----------
+   Tesseract, XLSX, Mammoth, Chart.js, and jsQR are only needed by
+   specific tools (OCR, spreadsheet, docx-reading, charts, QR), so they
+   load on first use instead of blocking initial page load. The four
+   libraries above (pdf-lib, pdf.js, Sortable, JSZip) stay eager since
+   nearly every tool touches at least one of them. */
+const LIB_URLS = {
+  tesseract: 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js',
+  xlsx: 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+  mammoth: 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
+  chartjs: 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js',
+  jsqr: 'https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.js',
+};
+const _libPromises = {};
+function loadLib(name){
+  if(window[{tesseract:'Tesseract', xlsx:'XLSX', mammoth:'mammoth', chartjs:'Chart', jsqr:'jsQR'}[name]]) return Promise.resolve();
+  if(_libPromises[name]) return _libPromises[name];
+  _libPromises[name] = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = LIB_URLS[name];
+    script.onload = () => resolve();
+    script.onerror = () => { delete _libPromises[name]; reject(new Error(`Could not load a required library (${name}). Check your internet connection and try again.`)); };
+    document.head.appendChild(script);
+  });
+  return _libPromises[name];
+}
+
+/* ---------- Recent projects (IndexedDB) ----------
+   PDF bytes are too large for localStorage's ~5-10MB quota, so recent
+   projects are kept in IndexedDB instead — a real, persistent store that
+   survives reloads. Only the latest snapshot per project is kept (not
+   full version history), capped to the 6 most recently touched
+   projects; opening one from the Dashboard just reloads its bytes the
+   same way opening any PDF does. */
+const DB_NAME = 'docuforge-db', DB_VERSION = 1, STORE_PROJECTS = 'projects';
+function openProjectsDb(){
+  return new Promise((resolve, reject) => {
+    if(!window.indexedDB){ reject(new Error('IndexedDB not available')); return; }
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if(!db.objectStoreNames.contains(STORE_PROJECTS)) db.createObjectStore(STORE_PROJECTS, { keyPath: 'id' });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function saveProjectSnapshot(id, name, bytes){
+  try{
+    const db = await openProjectsDb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_PROJECTS, 'readwrite');
+      tx.objectStore(STORE_PROJECTS).put({ id, name, size: bytes.byteLength, timestamp: Date.now(), bytes });
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+    });
+    await pruneOldProjects();
+  } catch(e){ console.warn('Could not save recent-project snapshot', e); }
+}
+async function pruneOldProjects(maxCount){
+  maxCount = maxCount || 6;
+  try{
+    const db = await openProjectsDb();
+    const all = await listRecentProjects();
+    if(all.length > maxCount){
+      const tx = db.transaction(STORE_PROJECTS, 'readwrite');
+      const store = tx.objectStore(STORE_PROJECTS);
+      all.slice(maxCount).forEach(p => store.delete(p.id));
+    }
+  } catch(e){}
+}
+async function listRecentProjects(){
+  try{
+    const db = await openProjectsDb();
+    const all = await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_PROJECTS, 'readonly');
+      const req = tx.objectStore(STORE_PROJECTS).getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+    return all.sort((a, b) => b.timestamp - a.timestamp);
+  } catch(e){ return []; }
+}
+async function loadProjectSnapshot(id){
+  const db = await openProjectsDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_PROJECTS, 'readonly');
+    const req = tx.objectStore(STORE_PROJECTS).get(id);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function deleteProjectSnapshot(id){
+  try{
+    const db = await openProjectsDb();
+    const tx = db.transaction(STORE_PROJECTS, 'readwrite');
+    tx.objectStore(STORE_PROJECTS).delete(id);
+  } catch(e){}
+}
+async function openRecentProject(id){
+  const rec = await loadProjectSnapshot(id);
+  if(!rec){ toast('That project is no longer available.', true); return; }
+  currentProjectId = rec.id;
+  $('outName').value = rec.name || 'document';
+  setToolsEnabled(true);
+  await commit(new Uint8Array(rec.bytes), `Reopened "${rec.name}".`);
+  setStudio('pdf');
+}
+
+/* ---------- Recent conversions log (localStorage) ---------- */
+function logConversion(action, filename){
+  try{
+    const log = JSON.parse(localStorage.getItem('pdfworkbench-conversions') || '[]');
+    log.unshift({ action, filename, timestamp: Date.now() });
+    localStorage.setItem('pdfworkbench-conversions', JSON.stringify(log.slice(0, 15)));
+  } catch(e){}
+}
+function getConversionLog(){
+  try{ return JSON.parse(localStorage.getItem('pdfworkbench-conversions') || '[]'); } catch(e){ return []; }
+}
+
 /* ---------- State ---------- */
 let workingBytes = null;      // Uint8Array of the current working PDF
 let history = [];             // undo stack of Uint8Array
@@ -712,7 +884,7 @@ function fmtBytes(n){
 }
 function setToolsEnabled(on){
   ['btnInsert','btnDuplicateSel','btnRotateSel','btnReverse','btnDeleteSel','btnCrop','btnExtract','btnSplit',
-   'btnWatermark','btnPageNum','btnHeaderFooter','btnFillForm','btnFlattenForm','btnSign',
+   'btnWatermark','btnPageNum','btnHeaderFooter','btnFillForm','btnFlattenForm','btnSign','btnEncrypt',
    'btnCompress','btnMetadata','btnUndo','btnRedo','btnReset','btnOcrPdf',
    'btnPdfToWord','btnPdfToPptx','btnPdfToExcel','btnPdfToCsv','btnPdfToText','btnPdfToHtml','btnPdfToJson','btnPdfToImages',
    'btnPdfToXml','btnPdfToSvg','btnPdfToRtf','btnPdfToOdt','btnPdfToOds','btnPdfToOdp','btnPdfToEpub',
@@ -726,6 +898,7 @@ function setToolsEnabled(on){
 }
 
 /* ---------- History ---------- */
+let currentProjectId = null;
 async function commit(newBytes, msg){
   history = history.slice(0, historyIndex + 1);
   history.push(newBytes);
@@ -736,6 +909,7 @@ async function commit(newBytes, msg){
   await renderThumbnails();
   if(msg) setStatus(msg);
   updateUndoRedoButtons();
+  if(currentProjectId) saveProjectSnapshot(currentProjectId, $('outName').value || 'document', newBytes);
 }
 async function undo(){
   if(historyIndex <= 0) return;
@@ -767,6 +941,7 @@ async function loadFiles(fileList){
       doc = await PDFDocument.load(firstBuf, { ignoreEncryption:true });
       startIdx = 1;
       $('outName').value = files[0].name.replace(/\.pdf$/i,'') || 'document';
+      currentProjectId = 'proj_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
     } else {
       doc = await PDFDocument.load(workingBytes);
     }
@@ -1145,6 +1320,7 @@ let ocrBusy = false;
 async function runOcrOnImageFile(file, lang){
   setStatus('Running OCR on image…'); showProgress(5);
   try{
+    await loadLib('tesseract');
     const { data } = await Tesseract.recognize(file, lang, {
       logger: m => { if(m.status === 'recognizing text') showProgress(5 + Math.round(m.progress*90)); }
     });
@@ -1168,6 +1344,7 @@ async function runOcrOnPdfPages(lang, pageIndices){
   const renderScale = 2.2;
   const results = [];
   try{
+    await loadLib('tesseract');
     const pdf = await pdfjsLib.getDocument({ data: workingBytes.slice() }).promise;
     for(let i = 0; i < pageIndices.length; i++){
       const pageNum = pageIndices[i] + 1;
@@ -1417,6 +1594,7 @@ async function convertFileToPdf(file){
   try{
     let bytes;
     if(ext === 'docx'){
+      await loadLib('mammoth');
       const buf = await file.arrayBuffer();
       const result = await mammoth.extractRawText({ arrayBuffer: buf });
       const paragraphs = result.value.split(/\r?\n+/);
@@ -1429,6 +1607,7 @@ async function convertFileToPdf(file){
       const blocks = extractHtmlBlocks(htmlText);
       bytes = await buildHtmlPdf(blocks);
     } else if(['csv','xlsx','xls'].includes(ext)){
+      await loadLib('xlsx');
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type:'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
@@ -1875,6 +2054,56 @@ async function signPdf({ dataUrl, pageIndex, position, widthPt }){
   }, `Signature stamped on page ${pageIndex + 1}.`);
 }
 
+/* ---------- Password protection (beta) ----------
+   Real encryption, but on a different footing than everything else in
+   this app: pdf-lib (the well-established library the whole rest of the
+   toolkit is built on) doesn't support encryption at all. This uses
+   pdf-lib-plus-encrypt, a community fork that adds AES-256/RC4
+   encryption with the same API — genuinely functional, but far less
+   battle-tested than the core library. It's loaded under a separate
+   name (window.PDFLibEncrypt) so it can't silently replace the vendored
+   pdf-lib that every other tool in this app depends on, and only used
+   for this one isolated operation — never fed back into the working
+   document or the undo history. */
+async function loadEncryptLib(){
+  if(window.PDFLibEncrypt) return;
+  const savedPDFLib = window.PDFLib;
+  await new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/pdf-lib-plus-encrypt@1.1.0/dist/pdf-lib.min.js';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Could not load the encryption library — check your internet connection.'));
+    document.head.appendChild(script);
+  });
+  if(!window.PDFLib || !window.PDFLib.PDFDocument){
+    window.PDFLib = savedPDFLib;
+    throw new Error('The encryption library did not load correctly.');
+  }
+  window.PDFLibEncrypt = window.PDFLib;
+  window.PDFLib = savedPDFLib; // restore the core library used by every other tool
+}
+async function encryptPdfBytes(bytes, opts){
+  await loadEncryptLib();
+  const { PDFDocument: PDFDocumentEnc } = window.PDFLibEncrypt;
+  const doc = await PDFDocumentEnc.load(bytes);
+  if(typeof doc.encrypt !== 'function') throw new Error('This build of the encryption library is missing the expected encrypt() method.');
+  doc.encrypt({
+    userPassword: opts.userPassword,
+    ownerPassword: opts.ownerPassword || opts.userPassword,
+    permissions: {
+      printing: opts.allowPrinting ? 'highResolution' : false,
+      modifying: !!opts.allowModifying,
+      copying: !!opts.allowCopying,
+      annotating: !!opts.allowAnnotating,
+      fillingForms: !!opts.allowFillingForms,
+      contentAccessibility: true,
+      documentAssembly: !!opts.allowModifying,
+    },
+  });
+  return await doc.save();
+}
+
+
 /* ---------- Images → PDF ---------- */
 async function loadImageEmbedBytes(doc, file){
   const isJpg = /\.(jpe?g)$/i.test(file.name) || file.type === 'image/jpeg';
@@ -1936,6 +2165,7 @@ async function compressBytesForBatch(bytes){
   return await doc.save({ useObjectStreams:true });
 }
 async function ocrBytesForBatch(bytes, lang){
+  await loadLib('tesseract');
   const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
   const results = [];
   for(let i = 1; i <= pdf.numPages; i++){
@@ -2177,7 +2407,8 @@ function showAnalysisResult(docType, fields, baseName){
       const rowsCsv = [['Field','Value'], ['Document Type', docType], ...Object.entries(fields)];
       downloadBlob(new Blob([rowsCsv.map(r => r.map(toCsvValue).join(',')).join('\n')], {type:'text/csv'}), baseName + '_analysis.csv');
     });
-    document.getElementById('anXlsx').addEventListener('click', () => {
+    document.getElementById('anXlsx').addEventListener('click', async () => {
+      await loadLib('xlsx');
       const rowsXl = [['Field','Value'], ['Document Type', docType], ...Object.entries(fields)];
       const ws = XLSX.utils.aoa_to_sheet(rowsXl);
       const wb = XLSX.utils.book_new();
@@ -2456,6 +2687,7 @@ async function buildHtmlPdf(blocks){
 
 /* ---------- Extract table from an image (OCR + position clustering) ---------- */
 async function extractTableFromImage(file, lang){
+  await loadLib('tesseract');
   const { data } = await Tesseract.recognize(file, lang, {});
   const items = (data.words || []).map(w => ({
     str: w.text, x: w.bbox.x0, y: -((w.bbox.y0 + w.bbox.y1) / 2), width: w.bbox.x1 - w.bbox.x0,
@@ -2479,7 +2711,8 @@ function showTableResult(rows, baseName){
   setTimeout(() => {
     document.getElementById('tblCsv').addEventListener('click', () =>
       downloadBlob(new Blob([rows.map(r => r.map(toCsvValue).join(',')).join('\n')], {type:'text/csv'}), baseName + '_table.csv'));
-    document.getElementById('tblXlsx').addEventListener('click', () => {
+    document.getElementById('tblXlsx').addEventListener('click', async () => {
+      await loadLib('xlsx');
       const ws = XLSX.utils.aoa_to_sheet(rows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Table');
@@ -2861,7 +3094,7 @@ $('btnCompress').addEventListener('click', () => {
   `, async () => {
     const quality = Math.min(0.95, Math.max(0.3, parseFloat(document.getElementById('cmpQuality').value) || 0.7));
     const maxDim = Math.min(4000, Math.max(400, parseInt(document.getElementById('cmpMaxDim').value) || 1600));
-    await compressPdf({ quality, maxDim });
+    await compressPdf({ quality, maxDim }); logConversion('Compressed PDF', $('outName').value);
   });
 });
 
@@ -2919,7 +3152,7 @@ $('btnOcrPdf').addEventListener('click', () => {
     if(!pageIndices.length){ toast('No pages to process — select some pages first, or choose "All pages".', true); return; }
     const results = await runOcrOnPdfPages(lang, pageIndices);
     if(!results) return;
-    await buildSearchablePdf(results);
+    await buildSearchablePdf(results); logConversion('Made PDF searchable (OCR)', $('outName').value);
     const fname = ($('outName').value || 'document') + '_ocr.txt';
     showTextResult('Recognized text', ocrResultsToText(results), fname);
   });
@@ -2952,12 +3185,13 @@ $('btnPdfToExcel').addEventListener('click', async () => {
   try{
     const { rows, hasText } = await collectPdfRows();
     if(!hasText){ toast('No extractable text layer — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    await loadLib('xlsx');
     const ws = XLSX.utils.aoa_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
     const out = XLSX.write(wb, { bookType:'xlsx', type:'array' });
     downloadBlob(new Blob([out], { type:'application/octet-stream' }), ($('outName').value || 'document') + '.xlsx');
-    setStatus('Exported Excel file.');
+    setStatus('Exported Excel file.'); logConversion('PDF → Excel', $('outName').value);
   } finally { showProgress(null); }
 });
 
@@ -2970,7 +3204,7 @@ $('btnPdfToWord').addEventListener('click', async () => {
     const pagesLines = pages.map(p => groupIntoLines(p.items).map(lineToText));
     const bytes = await buildDocxFromPages(pagesLines);
     downloadBlob(new Blob([bytes], { type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), ($('outName').value || 'document') + '.docx');
-    setStatus('Exported Word document.');
+    setStatus('Exported Word document.'); logConversion('PDF → Word', $('outName').value);
   } finally { showProgress(null); }
 });
 
@@ -3205,7 +3439,7 @@ $('btnPdfToPptx').addEventListener('click', async () => {
     });
     const bytes = await buildPptxFromSlides(slides);
     downloadBlob(new Blob([bytes], { type:'application/vnd.openxmlformats-officedocument.presentationml.presentation' }), ($('outName').value || 'document') + '.pptx');
-    setStatus('Exported PowerPoint file.');
+    setStatus('Exported PowerPoint file.'); logConversion('PDF → PowerPoint', $('outName').value);
   } catch(e){ console.error(e); toast('Could not build the PowerPoint file.', true); }
   finally { showProgress(null); }
 });
@@ -3281,6 +3515,41 @@ $('btnSign').addEventListener('click', () => {
     const clear = setupSignaturePad(canvas);
     document.getElementById('sigClear').addEventListener('click', clear);
   }, 0);
+});
+
+$('btnEncrypt').addEventListener('click', () => {
+  openModal('Set password (beta)', `
+    <p class="hint" style="margin:0;">Uses a community fork of the core PDF library — real encryption, but less proven than the rest of this app. Open the resulting file with your password before relying on it.</p>
+    <div class="field"><label>Password to open the file</label><input type="password" id="encUserPw" placeholder="Required"></div>
+    <div class="field"><label>Owner password (optional — controls the permissions below; if left blank, the password above is used for both)</label><input type="password" id="encOwnerPw"></div>
+    <div class="field"><label>Permissions once opened</label>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:13px;">
+        <label style="display:flex;align-items:center;gap:5px;font-weight:400;margin:0;"><input type="checkbox" id="encAllowPrint" checked style="width:auto;"> Printing</label>
+        <label style="display:flex;align-items:center;gap:5px;font-weight:400;margin:0;"><input type="checkbox" id="encAllowCopy" checked style="width:auto;"> Copying text/images</label>
+        <label style="display:flex;align-items:center;gap:5px;font-weight:400;margin:0;"><input type="checkbox" id="encAllowModify" style="width:auto;"> Modifying</label>
+        <label style="display:flex;align-items:center;gap:5px;font-weight:400;margin:0;"><input type="checkbox" id="encAllowAnnotate" checked style="width:auto;"> Annotating/comments</label>
+        <label style="display:flex;align-items:center;gap:5px;font-weight:400;margin:0;"><input type="checkbox" id="encAllowForms" checked style="width:auto;"> Filling forms</label>
+      </div>
+    </div>
+  `, async () => {
+    const userPassword = document.getElementById('encUserPw').value;
+    if(!userPassword){ toast('Enter a password.', true); return; }
+    const ownerPassword = document.getElementById('encOwnerPw').value;
+    setStatus('Encrypting PDF…'); showProgress(20);
+    try{
+      const bytes = await encryptPdfBytes(workingBytes, {
+        userPassword, ownerPassword,
+        allowPrinting: document.getElementById('encAllowPrint').checked,
+        allowCopying: document.getElementById('encAllowCopy').checked,
+        allowModifying: document.getElementById('encAllowModify').checked,
+        allowAnnotating: document.getElementById('encAllowAnnotate').checked,
+        allowFillingForms: document.getElementById('encAllowForms').checked,
+      });
+      downloadBlob(new Blob([bytes], { type:'application/pdf' }), ($('outName').value || 'document') + '_protected.pdf');
+      setStatus('Password-protected PDF created — verify it opens correctly before relying on it.');
+    } catch(e){ console.error(e); toast('Could not encrypt this PDF: ' + e.message, true); }
+    finally { showProgress(null); }
+  });
 });
 
 $('btnImagesToPdf').addEventListener('click', () => {
@@ -3681,6 +3950,7 @@ $('btnQrReader').addEventListener('click', () => {
     const file = document.getElementById('qrFile').files[0];
     if(!file){ toast('Choose an image first.', true); return; }
     try{
+      await loadLib('jsqr');
       const img = await loadImageFromBytes(new Uint8Array(await file.arrayBuffer()), file.type || 'image/png');
       const canvas = document.createElement('canvas');
       canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
@@ -3795,6 +4065,40 @@ document.addEventListener('keydown', (e) => {
   else if(ctrl && e.key.toLowerCase() === 's'){ e.preventDefault(); if(workingBytes) $('btnDownload').click(); }
   else if(ctrl && e.key.toLowerCase() === 'o'){ e.preventDefault(); $('btnOpen').click(); }
   else if(e.key === 'Delete' && selected.size){ $('btnDeleteSel').click(); }
+  else if(e.key === '?'){ e.preventDefault(); showKeyboardShortcuts(); }
+});
+
+/* ---------- Accessibility ---------- */
+function showKeyboardShortcuts(){
+  openModal('Keyboard shortcuts', `
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;">
+      <div style="display:flex;justify-content:space-between;"><span>Undo</span><kbd class="mono">Ctrl/Cmd + Z</kbd></div>
+      <div style="display:flex;justify-content:space-between;"><span>Redo</span><kbd class="mono">Ctrl/Cmd + Y</kbd></div>
+      <div style="display:flex;justify-content:space-between;"><span>Select all pages</span><kbd class="mono">Ctrl/Cmd + A</kbd></div>
+      <div style="display:flex;justify-content:space-between;"><span>Download PDF</span><kbd class="mono">Ctrl/Cmd + S</kbd></div>
+      <div style="display:flex;justify-content:space-between;"><span>Open / merge PDFs</span><kbd class="mono">Ctrl/Cmd + O</kbd></div>
+      <div style="display:flex;justify-content:space-between;"><span>Delete selected pages</span><kbd class="mono">Delete</kbd></div>
+      <div style="display:flex;justify-content:space-between;"><span>Show this list</span><kbd class="mono">?</kbd></div>
+    </div>
+    <p class="hint">Shortcuts are disabled while typing in a text field, so they won't interfere with your input.</p>
+  `, async () => {});
+  $('modalConfirm').style.display = 'none';
+  $('modalCancel').textContent = 'Close';
+}
+$('btnShowShortcuts').addEventListener('click', showKeyboardShortcuts);
+
+const highContrastPref = localStorage.getItem('pdfworkbench-high-contrast');
+if(highContrastPref === '1'){ document.body.classList.add('high-contrast'); $('toggleHighContrast').checked = true; }
+$('toggleHighContrast').addEventListener('change', (e) => {
+  document.body.classList.toggle('high-contrast', e.target.checked);
+  localStorage.setItem('pdfworkbench-high-contrast', e.target.checked ? '1' : '0');
+});
+
+const largeTextPref = localStorage.getItem('pdfworkbench-large-text');
+if(largeTextPref === '1'){ document.body.classList.add('large-text'); $('toggleLargeText').checked = true; }
+$('toggleLargeText').addEventListener('change', (e) => {
+  document.body.classList.toggle('large-text', e.target.checked);
+  localStorage.setItem('pdfworkbench-large-text', e.target.checked ? '1' : '0');
 });
 
 /* ---------- Landing page ---------- */
@@ -3806,7 +4110,64 @@ $('btnLaunchEditor').addEventListener('click', () => {
 /* ---------- Studio navigation (top tabs + ribbon) ---------- */
 let currentStudio = 'dashboard';
 function updateDashboardTilesVisibility(){
-  $('dashboardTiles').style.display = (currentStudio === 'dashboard' && !workingBytes) ? 'grid' : 'none';
+  const showDash = currentStudio === 'dashboard' && !workingBytes;
+  $('dashboardTiles').style.display = showDash ? 'grid' : 'none';
+  $('dashboardRecent').style.display = showDash ? 'block' : 'none';
+  if(showDash) renderDashboardRecent();
+}
+function fmtRelativeTime(ts){
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if(hrs < 24) return hrs + 'h ago';
+  const days = Math.floor(hrs / 24);
+  if(days < 7) return days + 'd ago';
+  return new Date(ts).toLocaleDateString();
+}
+async function renderDashboardRecent(){
+  const projects = await listRecentProjects();
+  const continueArea = $('continueProjectArea');
+  if(projects.length){
+    const latest = projects[0];
+    continueArea.innerHTML = `
+      <div class="continue-banner">
+        <div>Continue where you left off — <strong>${escapeXml(latest.name)}</strong> <span style="opacity:.75;">(${fmtBytes(latest.size)}, ${fmtRelativeTime(latest.timestamp)})</span></div>
+        <button id="continueProjectBtn" type="button">Continue</button>
+      </div>`;
+    document.getElementById('continueProjectBtn').addEventListener('click', () => openRecentProject(latest.id));
+  } else {
+    continueArea.innerHTML = '';
+  }
+  const filesList = $('recentFilesList');
+  if(!projects.length){
+    filesList.innerHTML = '<div class="recent-empty">No recent files yet — they\'ll show up here once you start a project.</div>';
+  } else {
+    filesList.innerHTML = projects.map(p => `
+      <div class="recent-row">
+        <span class="rr-main">${escapeXml(p.name)}</span>
+        <span class="rr-meta">${fmtBytes(p.size)} · ${fmtRelativeTime(p.timestamp)}</span>
+        <button class="rr-open" data-id="${p.id}" type="button">Open</button>
+        <button class="rr-delete" data-id="${p.id}" type="button" aria-label="Remove from recent files">✕</button>
+      </div>`).join('');
+    filesList.querySelectorAll('.rr-open').forEach(b => b.addEventListener('click', () => openRecentProject(b.dataset.id)));
+    filesList.querySelectorAll('.rr-delete').forEach(b => b.addEventListener('click', async () => {
+      await deleteProjectSnapshot(b.dataset.id);
+      renderDashboardRecent();
+    }));
+  }
+  const conversions = getConversionLog();
+  const convList = $('recentConversionsList');
+  if(!conversions.length){
+    convList.innerHTML = '<div class="recent-empty">No conversions yet — they\'ll be logged here as you use the tools.</div>';
+  } else {
+    convList.innerHTML = conversions.map(c => `
+      <div class="recent-row">
+        <span class="rr-main">${escapeXml(c.action)}${c.filename ? ' — ' + escapeXml(c.filename) : ''}</span>
+        <span class="rr-meta">${fmtRelativeTime(c.timestamp)}</span>
+      </div>`).join('');
+  }
 }
 function setStudio(name){
   currentStudio = name;
@@ -3897,7 +4258,8 @@ function showChartResult(labels, data, type, seriesLabel){
   `, async () => {});
   $('modalConfirm').style.display = 'none';
   $('modalCancel').textContent = 'Close';
-  setTimeout(() => {
+  setTimeout(async () => {
+    await loadLib('chartjs');
     const ctx = document.getElementById('chartCanvas').getContext('2d');
     const palette = ['#B65C1F','#113B34','#4B5750','#A3341E','#1B4F45','#C7B08A','#7A8B84','#D97757','#5F9E8A','#E08A45'];
     new Chart(ctx, {
@@ -3917,7 +4279,8 @@ function showChartResult(labels, data, type, seriesLabel){
       const rows = [[  'Label', seriesLabel || 'Value' ], ...labels.map((l,i) => [l, data[i]])];
       downloadBlob(new Blob([rows.map(r => r.map(toCsvValue).join(',')).join('\n')], {type:'text/csv'}), 'chart_data.csv');
     });
-    document.getElementById('chartXlsx').addEventListener('click', () => {
+    document.getElementById('chartXlsx').addEventListener('click', async () => {
+      await loadLib('xlsx');
       const rows = [[  'Label', seriesLabel || 'Value' ], ...labels.map((l,i) => [l, data[i]])];
       const ws = XLSX.utils.aoa_to_sheet(rows);
       const wb = XLSX.utils.book_new();
@@ -3948,6 +4311,7 @@ $('btnExcelChart').addEventListener('click', () => {
       const file = e.target.files[0];
       if(!file) return;
       try{
+        await loadLib('xlsx');
         const buf = await file.arrayBuffer();
         const wb = XLSX.read(buf, { type:'array' });
         const ws = wb.Sheets[wb.SheetNames[0]];
@@ -4117,7 +4481,8 @@ $('btnChartDigitizer').addEventListener('click', () => {
       const rows = [['Label','Value'], ...digDataPoints.map(p => [p.label, p.val])];
       downloadBlob(new Blob([rows.map(r => r.map(toCsvValue).join(',')).join('\n')], {type:'text/csv'}), 'digitized_data.csv');
     });
-    document.getElementById('digXlsx').addEventListener('click', () => {
+    document.getElementById('digXlsx').addEventListener('click', async () => {
+      await loadLib('xlsx');
       const rows = [['Label','Value'], ...digDataPoints.map(p => [p.label, p.val])];
       const ws = XLSX.utils.aoa_to_sheet(rows);
       const wb = XLSX.utils.book_new();
