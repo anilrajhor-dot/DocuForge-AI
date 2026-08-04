@@ -570,6 +570,8 @@ body.dark .studio-tab.active{color:var(--pine);}
 <button class="tool-btn" id="btnTranslateText"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 5h9M7 3v2m0 0c0 4-1 7-4 9m4-4c1 2 2.5 3.5 4 4M14 21l4-9 4 9m-6.5-3h5"></path></svg> Translate text…</button>
 <button class="tool-btn" id="btnTranslateDoc"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"></path><path d="M9 15l3-3 3 3M12 12v7"></path></svg> Translate a document…</button>
 <button class="tool-btn" disabled="" id="btnTranslatePdf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"></path><path d="M4 5h9M7 3v2m0 0c0 4-1 7-4 9" transform="translate(1,2) scale(0.55)"></path></svg> Translate this open PDF</button>
+<button class="tool-btn" id="btnTranslateAI"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 5h9M7 3v2m0 0c0 4-1 7-4 9m4-4c1 2 2.5 3.5 4 4M14 21l4-9 4 9m-6.5-3h5"></path><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z" transform="translate(3,-2) scale(0.4)"></path></svg> Translate via AI (higher quality)…</button>
+<p class="hint" style="padding:0 14px;margin:6px 0 0;">"Translate text/document/PDF" use a free translation service (MyMemory) — no setup needed, but quality is inconsistent, especially on longer or more formal text. "Translate via AI" uses a proper language model instead — noticeably better with grammar and context, but needs an API key. Google's Gemini API has a genuinely free tier if cost is a concern.</p>
 </div>
 </div>
       <div class="ribbon-panel" data-studio-panel="convert">
@@ -649,6 +651,7 @@ body.dark .studio-tab.active{color:var(--pine);}
 <button class="tool-btn" disabled="" id="btnSign"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M3 17c2-4 3-2 5-6s2 3 4-1 3 2 5-2M4 21h16"></path></svg> Sign PDF…</button>
 <button class="tool-btn" disabled="" id="btnFillForm"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><path d="M7 9h10M7 13h6"></path></svg> Fill form fields…</button>
 <button class="tool-btn" disabled="" id="btnFlattenForm"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><path d="M7 14l3 3 7-8"></path></svg> Flatten form</button>
+<button class="tool-btn" id="btnOpenEncrypted"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 018 0v4"></path><path d="M12 15v2"></path></svg> Open password-protected PDF <span class="beta-badge">BETA</span></button>
 <button class="tool-btn" disabled id="btnEncrypt"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 018 0v4"></path></svg> Set password <span class="beta-badge">BETA</span></button>
 <button class="tool-btn" disabled id="btnRedact"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><rect x="6" y="9" width="6" height="3" fill="currentColor" stroke="none"></rect><path d="M6 15h5"></path></svg> Redact page…</button>
 <p class="hint" style="padding:0 14px;margin:6px 0 0;">Password protection uses a community fork of the core PDF library, not the well-established one the rest of this app relies on — test that your protected file actually opens with the password before trusting it for anything sensitive. <strong>Not recommended for confidential or legally sensitive documents until more thoroughly validated.</strong> Cryptographic digital signatures still aren't supported; that genuinely requires a certificate authority.</p>
@@ -743,7 +746,7 @@ body.dark .studio-tab.active{color:var(--pine);}
       <p>Converts both directions: PDF → PowerPoint and PowerPoint → PDF, each page/slide mapped one-to-one. Structural, not visual — text and titles carry over, original slide design doesn't.</p>
 
       <h3 style="margin-top:18px;font-size:14px;">🤖 AI Assistant</h3>
-      <p>Summarize, rewrite, simplify, generate meeting minutes, review a contract, or chat with a PDF — all using your own Anthropic or OpenAI API key, entered once and optionally remembered in your browser. There's no backend here to provide a shared key.</p>
+      <p>Summarize, rewrite, simplify, generate meeting minutes, review a contract, or chat with a PDF — all using your own Anthropic, OpenAI, or Google Gemini API key, entered once and optionally remembered in your browser. There's no backend here to provide a shared key. If cost is a concern: Google's Gemini API (aistudio.google.com) has a genuinely free tier — no credit card, no expiration.</p>
 
       <h3 style="margin-top:18px;font-size:14px;">🌐 Website Studio</h3>
       <p>Describe a site — name, tagline, sections, style — and get a complete, unique single-file HTML website back, live-previewed and ready to download. Uses the same AI key as AI Studio.</p>
@@ -1120,6 +1123,16 @@ function updateUndoRedoButtons(){
 }
 
 /* ---------- Loading / merging files ---------- */
+async function loadPdfSafely(buf){
+  try{
+    return await PDFDocument.load(buf);
+  } catch(e){
+    if(e && e.message && /encrypt/i.test(e.message)){
+      throw new Error('This PDF is password-protected. Use Security Studio → "Open password-protected PDF" first, then try again.');
+    }
+    throw e;
+  }
+}
 async function loadFiles(fileList){
   const isPdfFile = f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
   const isImageFile = f => f.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i.test(f.name);
@@ -1133,7 +1146,7 @@ async function loadFiles(fileList){
       currentProjectId = 'proj_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
       if(isPdfFile(allFiles[0])){
         const firstBuf = await allFiles[0].arrayBuffer();
-        doc = await PDFDocument.load(firstBuf, { ignoreEncryption:true });
+        doc = await loadPdfSafely(firstBuf);
         startIdx = 1;
       } else {
         doc = await PDFDocument.create();
@@ -1147,7 +1160,7 @@ async function loadFiles(fileList){
       const f = allFiles[i];
       if(isPdfFile(f)){
         const buf = await f.arrayBuffer();
-        const src = await PDFDocument.load(buf, { ignoreEncryption:true });
+        const src = await loadPdfSafely(buf);
         const copied = await doc.copyPages(src, src.getPageIndices());
         copied.forEach(p => doc.addPage(p));
       } else {
@@ -1162,7 +1175,7 @@ async function loadFiles(fileList){
     await commit(bytes, `Loaded ${allFiles.length} file${allFiles.length>1?'s':''} (${doc.getPageCount()} pages total).`);
   } catch(e){
     console.error(e);
-    toast('Could not open one of those files — it may be corrupted, an unsupported format, or password protected.', true);
+    toast((e && e.message && /password-protected/.test(e.message)) ? e.message : 'Could not open one of those files — it may be corrupted, an unsupported format, or password protected.', true);
   } finally { showProgress(null); }
 }
 
@@ -1316,7 +1329,7 @@ async function insertPdfAt(file, position){
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     if(isPdf){
       const buf = await file.arrayBuffer();
-      const src = await PDFDocument.load(buf, { ignoreEncryption:true });
+      const src = await loadPdfSafely(buf);
       const copied = await doc.copyPages(src, src.getPageIndices());
       copied.forEach((p, i) => doc.insertPage(Math.min(position + i, doc.getPageCount()), p));
       const bytes = await doc.save();
@@ -1330,7 +1343,7 @@ async function insertPdfAt(file, position){
       const bytes = await doc.save();
       await commit(bytes, `Inserted 1 page (from image) at position ${position+1}.`);
     }
-  } catch(e){ console.error(e); toast('Could not insert that file.', true); }
+  } catch(e){ console.error(e); toast((e && e.message && /password-protected/.test(e.message)) ? e.message : 'Could not insert that file.', true); }
   finally{ showProgress(null); }
 }
 
@@ -2508,6 +2521,12 @@ async function encryptPdfBytes(bytes, opts){
   });
   return await doc.save();
 }
+async function decryptPdfBytes(bytes, password){
+  await loadEncryptLib();
+  const { PDFDocument: PDFDocumentEnc } = window.PDFLibEncrypt;
+  const doc = await PDFDocumentEnc.load(bytes, { password });
+  return await doc.save();
+}
 
 
 /* ---------- Images → PDF ---------- */
@@ -3194,6 +3213,15 @@ async function callAI(provider, apiKey, model, prompt, maxTokens){
     const data = await res.json();
     if(data.error) throw new Error(data.error.message || 'Anthropic API error.');
     return (data.content || []).map(b => b.text || '').join('\n').trim();
+  } else if(provider === 'gemini'){
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-2.5-flash'}:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: maxTokens } }),
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message || 'Gemini API error.');
+    return (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('\n').trim();
   } else {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -4096,6 +4124,58 @@ $('btnTranslateDoc').addEventListener('click', () => {
   });
 });
 
+$('btnTranslateAI').addEventListener('click', () => {
+  const savedKey = localStorage.getItem('pdfworkbench-ai-key') || '';
+  const savedProvider = localStorage.getItem('pdfworkbench-ai-provider') || 'anthropic';
+  openModal('Translate via AI', `
+    <p class="hint" style="margin:0;">Uses an AI model instead of the free MyMemory service — generally much better with grammar, idioms, and longer or formal text. Needs your own API key; Google Gemini's free tier (aistudio.google.com) works well here at no cost.</p>
+    <div class="field row">
+      <div><label>Provider</label><select id="trAiProvider"><option value="anthropic" ${savedProvider==='anthropic'?'selected':''}>Anthropic (Claude)</option><option value="gemini" ${savedProvider==='gemini'?'selected':''}>Google Gemini (free tier available)</option><option value="openai" ${savedProvider==='openai'?'selected':''}>OpenAI</option></select></div>
+      <div><label>API key</label><input type="password" id="trAiKey" value="${savedKey}" placeholder="sk-..."></div>
+    </div>
+    <div class="field"><label>Target language</label><select id="trAiTarget">${langOptions(false)}</select></div>
+    <div class="field"><label>Source text</label>
+      <select id="trAiSource">
+        <option value="pdf" ${workingBytes ? '' : 'disabled'}>This PDF's text</option>
+        <option value="paste">Paste text</option>
+      </select>
+    </div>
+    <div class="field" id="trAiPasteField" style="display:none;"><label>Text</label><textarea id="trAiPasteText" style="min-height:120px;"></textarea></div>
+  `, async () => {
+    const provider = document.getElementById('trAiProvider').value;
+    const apiKey = document.getElementById('trAiKey').value.trim();
+    const target = document.getElementById('trAiTarget').value;
+    const source = document.getElementById('trAiSource').value;
+    if(!apiKey){ toast('Enter your API key.', true); return; }
+    localStorage.setItem('pdfworkbench-ai-key', apiKey);
+    localStorage.setItem('pdfworkbench-ai-provider', provider);
+    let text = '';
+    if(source === 'pdf'){
+      const pages = await getPdfPagesTextItems();
+      text = pages.map(p => groupIntoLines(p.items).map(lineToText).join('\n')).join('\n\n');
+      if(!text.trim()){ toast('No extractable text — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    } else {
+      text = document.getElementById('trAiPasteText').value.trim();
+      if(!text){ toast('Paste some text first.', true); return; }
+    }
+    if(text.length > 12000) text = text.slice(0, 12000);
+    setStatus('Translating via AI…'); showProgress(20);
+    try{
+      const targetName = langName(target);
+      const prompt = `Translate the following text into ${targetName}. Output ONLY the translation \u2014 no preamble, no notes, no explanation \u2014 and preserve paragraph breaks as closely as possible:\n\n${text}`;
+      const translated = await callAI(provider, apiKey, '', prompt, 4000);
+      showTranslationResult(text, translated, 'Original', targetName, 'ai_translation');
+      setStatus('Translation complete.');
+    } catch(e){ console.error(e); toast('AI translation failed: ' + e.message, true); }
+    finally { showProgress(null); }
+  });
+  setTimeout(() => {
+    document.getElementById('trAiSource').addEventListener('change', e => {
+      document.getElementById('trAiPasteField').style.display = e.target.value === 'paste' ? 'block' : 'none';
+    });
+  }, 0);
+});
+
 $('btnTranslatePdf').addEventListener('click', () => {
   openModal('Translate this PDF', `
     <div class="field row">
@@ -4285,6 +4365,32 @@ $('btnEncrypt').addEventListener('click', () => {
       setStatus('Password-protected PDF created — verify it opens correctly before relying on it.');
     } catch(e){ console.error(e); toast('Could not encrypt this PDF: ' + e.message, true); }
     finally { showProgress(null); }
+  });
+});
+
+$('btnOpenEncrypted').addEventListener('click', () => {
+  openModal('Open password-protected PDF', `
+    <p class="hint" style="margin:0;">Beta: uses the same community fork as "Set password" — less battle-tested than the rest of this app. Decrypts the file and loads it as a normal working copy; it won't stay password-protected here unless you re-apply "Set password" before exporting.</p>
+    <div class="field"><label>Password-protected PDF</label><input type="file" id="pwPdfFile" accept="application/pdf"></div>
+    <div class="field"><label>Password</label><input type="password" id="pwPdfPassword"></div>
+  `, async () => {
+    const file = document.getElementById('pwPdfFile').files[0];
+    const password = document.getElementById('pwPdfPassword').value;
+    if(!file){ toast('Choose a file.', true); return; }
+    if(!password){ toast('Enter the password.', true); return; }
+    setStatus('Decrypting PDF…'); showProgress(20);
+    try{
+      const buf = new Uint8Array(await file.arrayBuffer());
+      const decryptedBytes = await decryptPdfBytes(buf, password);
+      $('outName').value = file.name.replace(/\.pdf$/i, '') || 'document';
+      currentProjectId = 'proj_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+      setToolsEnabled(true);
+      await commit(decryptedBytes, `Opened and decrypted "${file.name}".`);
+      setStudio('pdf');
+    } catch(e){
+      console.error(e);
+      toast('Could not open that PDF — check the password is correct: ' + (e && e.message ? e.message : 'unknown error'), true);
+    } finally { showProgress(null); }
   });
 });
 
@@ -4478,7 +4584,7 @@ $('btnGenWebsite').addEventListener('click', () => {
   openModal('Generate a website', `
     <p class="hint" style="margin:0;">Uses AI (your own API key) to write a complete, ready-to-edit single-file website from what you describe below. This is one of the tools here that goes over the internet — your description is sent to the AI provider you choose.</p>
     <div class="field row">
-      <div><label>Provider</label><select id="webProvider"><option value="anthropic" ${savedProvider==='anthropic'?'selected':''}>Anthropic (Claude)</option><option value="openai" ${savedProvider==='openai'?'selected':''}>OpenAI</option></select></div>
+      <div><label>Provider</label><select id="webProvider"><option value="anthropic" ${savedProvider==='anthropic'?'selected':''}>Anthropic (Claude)</option><option value="gemini" ${savedProvider==='gemini'?'selected':''}>Google Gemini (free tier available)</option><option value="openai" ${savedProvider==='openai'?'selected':''}>OpenAI</option></select></div>
       <div><label>API key</label><input type="password" id="webKey" value="${savedKey}" placeholder="sk-..."></div>
     </div>
     <div class="field"><label>Site name</label><input type="text" id="webName" placeholder="e.g. Sharma Consulting"></div>
@@ -4536,9 +4642,9 @@ function openAiTaskModal(taskId, title, description, filenameSuffix){
   const savedKey = localStorage.getItem('pdfworkbench-ai-key') || '';
   const savedProvider = localStorage.getItem('pdfworkbench-ai-provider') || 'anthropic';
   openModal(title, `
-    <p class="hint" style="margin:0;">${description} Uses your own AI API key, sent directly from your browser to the provider you choose.</p>
+    <p class="hint" style="margin:0;">${description} Uses your own AI API key, sent directly from your browser to the provider you choose. No budget for this? Google's Gemini API has a genuinely free tier — get a key at aistudio.google.com, no card required.</p>
     <div class="field row">
-      <div><label>Provider</label><select id="aiTaskProvider"><option value="anthropic" ${savedProvider==='anthropic'?'selected':''}>Anthropic (Claude)</option><option value="openai" ${savedProvider==='openai'?'selected':''}>OpenAI</option></select></div>
+      <div><label>Provider</label><select id="aiTaskProvider"><option value="anthropic" ${savedProvider==='anthropic'?'selected':''}>Anthropic (Claude)</option><option value="gemini" ${savedProvider==='gemini'?'selected':''}>Google Gemini (free tier available)</option><option value="openai" ${savedProvider==='openai'?'selected':''}>OpenAI</option></select></div>
       <div><label>API key</label><input type="password" id="aiTaskKey" value="${savedKey}" placeholder="sk-..."></div>
     </div>
     <div class="field"><label>Source text</label>
@@ -4591,7 +4697,7 @@ $('btnAiTools').addEventListener('click', () => {
   const savedProvider = localStorage.getItem('pdfworkbench-ai-provider') || 'anthropic';
   openModal('AI text tools', `
     <p class="hint" style="margin:0;">This is one of two tools (besides Translate) that goes over the internet — your text is sent directly from your browser to the AI provider you choose, using your own API key. Nothing passes through any server of ours.</p>
-    <div class="field"><label>Provider</label><select id="aiProvider"><option value="anthropic" ${savedProvider==='anthropic'?'selected':''}>Anthropic (Claude)</option><option value="openai" ${savedProvider==='openai'?'selected':''}>OpenAI</option></select></div>
+    <div class="field"><label>Provider</label><select id="aiProvider"><option value="anthropic" ${savedProvider==='anthropic'?'selected':''}>Anthropic (Claude)</option><option value="gemini" ${savedProvider==='gemini'?'selected':''}>Google Gemini (free tier available)</option><option value="openai" ${savedProvider==='openai'?'selected':''}>OpenAI</option></select></div>
     <div class="field"><label>API key</label><input type="password" id="aiKey" value="${savedKey}" placeholder="sk-..."></div>
     <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="aiRemember" style="width:auto;" ${savedKey?'checked':''}><label style="margin:0;font-weight:400;" for="aiRemember">Remember this key in this browser only</label></div>
     <div class="field"><label>Model (optional — leave blank for a sensible default)</label><input type="text" id="aiModel" placeholder="e.g. claude-haiku-4-5-20251001"></div>
@@ -4682,7 +4788,7 @@ $('btnChatPdf').addEventListener('click', async () => {
   const savedProvider = localStorage.getItem('pdfworkbench-ai-provider') || 'anthropic';
   openModal('Chat with this PDF', `
     <div class="field row">
-      <div><label>Provider</label><select id="chatProvider"><option value="anthropic" ${savedProvider==='anthropic'?'selected':''}>Anthropic (Claude)</option><option value="openai" ${savedProvider==='openai'?'selected':''}>OpenAI</option></select></div>
+      <div><label>Provider</label><select id="chatProvider"><option value="anthropic" ${savedProvider==='anthropic'?'selected':''}>Anthropic (Claude)</option><option value="gemini" ${savedProvider==='gemini'?'selected':''}>Google Gemini (free tier available)</option><option value="openai" ${savedProvider==='openai'?'selected':''}>OpenAI</option></select></div>
       <div><label>API key</label><input type="password" id="chatKey" value="${savedKey}" placeholder="sk-..."></div>
     </div>
     <div id="chatMessages" style="max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:4px;padding:8px;background:var(--bg);display:flex;flex-direction:column;gap:8px;"></div>
@@ -5884,7 +5990,8 @@ const HELP_FAQ = [
   { q: ['excel','xlsx','spreadsheet'], a: 'Conversion Studio → "PDF → Excel" for tables inside a PDF, or Spreadsheet Studio → "Excel / CSV → Chart…" to visualize spreadsheet data you already have.' },
   { q: ['password','protect','encrypt'], a: 'Security Studio → "Set password (beta)…" — real encryption, but a less battle-tested library than the rest of the app. Verify the output opens correctly before relying on it.' },
   { q: ['sign','signature'], a: 'Security Studio → "Sign PDF…" draws a visual signature stamp — not a cryptographic digital signature, which needs a certificate authority no browser tool can provide.' },
-  { q: ['chat','ask question','summarize','summarise'], a: 'AI Studio has Summarize, Chat with this PDF, and more — needs your own Anthropic or OpenAI API key, since there\u2019s no backend here to supply one.' },
+  { q: ['chat','ask question','summarize','summarise'], a: 'AI Studio has Summarize, Chat with this PDF, and more — needs your own Anthropic, OpenAI, or Google Gemini API key. No budget? Gemini\u2019s API (aistudio.google.com) has a genuinely free tier, no card needed.' },
+  { q: ['free','no cost','without paying','api key cost'], a: 'AI Studio needs an API key from Anthropic, OpenAI, or Google Gemini. Gemini\u2019s (aistudio.google.com) has a real free tier \u2014 no credit card, no expiration \u2014 so you can use Summarize, Chat with PDF, and the other AI tools at no cost.' },
   { q: ['batch'], a: 'Batch Studio → "Batch process files…" — run one operation across many PDFs at once, download as a single .zip.' },
   { q: ['upload','privacy','safe','leave device','internet'], a: 'Everything runs in your browser — nothing is uploaded. The exceptions are Translate and AI tools, which send just the text you choose (never your files).' },
   { q: ['reader','epub','read a book'], a: 'The Reader tab is a dedicated reading view for PDF and EPUB, separate from editing — with themes, zoom, and a table of contents for EPUB.' },
