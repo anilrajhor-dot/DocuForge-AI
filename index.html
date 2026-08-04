@@ -2120,7 +2120,17 @@ function extractPptxSlideLines(xml){
 /* ---------- Shared: extract {title, bullets} per slide from a .pptx ---------- */
 async function extractPptxSlidesData(file){
   const buf = await file.arrayBuffer();
-  const zip = await JSZip.loadAsync(buf);
+  const headBytes = new Uint8Array(buf.slice(0, 8));
+  const OLE_SIG = [0xD0,0xCF,0x11,0xE0,0xA1,0xB1,0x1A,0xE1];
+  if(OLE_SIG.every((b,i) => headBytes[i] === b)){
+    throw new Error('This PowerPoint file is password-protected (Office\u2019s encrypted format is a completely different container, not a zip). Remove the password in PowerPoint first, then try again.');
+  }
+  let zip;
+  try{
+    zip = await JSZip.loadAsync(buf);
+  } catch(zipErr){
+    throw new Error('This doesn\u2019t look like a valid .pptx file \u2014 could not open it as a zip archive. Make sure it\u2019s a genuine PowerPoint file (not a .ppt, renamed file, or corrupted download).');
+  }
   const slideFiles = Object.keys(zip.files)
     .filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n))
     .sort((a,b) => parseInt(a.match(/slide(\d+)\.xml/)[1]) - parseInt(b.match(/slide(\d+)\.xml/)[1]));
@@ -2135,7 +2145,17 @@ async function extractPptxSlidesData(file){
 }
 async function convertPptxFileToPdf(file){
   const buf = await file.arrayBuffer();
-  const zip = await JSZip.loadAsync(buf);
+  const headBytes = new Uint8Array(buf.slice(0, 8));
+  const OLE_SIG = [0xD0,0xCF,0x11,0xE0,0xA1,0xB1,0x1A,0xE1];
+  if(OLE_SIG.every((b,i) => headBytes[i] === b)){
+    throw new Error('This PowerPoint file is password-protected (Office\u2019s encrypted format is a completely different container, not a zip). Remove the password in PowerPoint first, then try again.');
+  }
+  let zip;
+  try{
+    zip = await JSZip.loadAsync(buf);
+  } catch(zipErr){
+    throw new Error('This doesn\u2019t look like a valid .pptx file \u2014 could not open it as a zip archive. Make sure it\u2019s a genuine PowerPoint file (not a .ppt, renamed file, or corrupted download).');
+  }
   let pageWidthPt = 960, pageHeightPt = 540;
   const presFile = zip.file('ppt/presentation.xml');
   if(presFile){
@@ -2147,7 +2167,7 @@ async function convertPptxFileToPdf(file){
   const slideFiles = Object.keys(zip.files)
     .filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n))
     .sort((a,b) => parseInt(a.match(/slide(\d+)\.xml/)[1]) - parseInt(b.match(/slide(\d+)\.xml/)[1]));
-  if(!slideFiles.length) throw new Error('No slides found in this file.');
+  if(!slideFiles.length) throw new Error('No slides found — this .pptx file may be empty or use an unusual internal structure.');
   const slides = [];
   for(const f of slideFiles) slides.push(extractPptxSlideLines(await zip.file(f).async('string')));
   return { bytes: await buildSlideDeckPdf(slides, pageWidthPt, pageHeightPt), count: slides.length };
@@ -3887,7 +3907,7 @@ $('btnPptxToPdf').addEventListener('click', () => {
       downloadBlob(new Blob([result.bytes], { type:'application/pdf' }), name);
       setStatus(`Created ${name} from ${result.count} slide(s).`);
       logConversion('PowerPoint → PDF', file.name);
-    } catch(e){ console.error(e); toast('Could not convert that PowerPoint file — it may use a format this tool cannot read.', true); }
+    } catch(e){ console.error(e); toast('Could not convert that PowerPoint file: ' + (e && e.message ? e.message : 'unknown error') + '.', true); }
     finally { showProgress(null); }
   });
 });
@@ -3907,7 +3927,7 @@ $('btnPptxMerge').addEventListener('click', () => {
       downloadBlob(new Blob([bytes], { type:'application/vnd.openxmlformats-officedocument.presentationml.presentation' }), 'merged.pptx');
       setStatus(`Merged ${files.length} files into one deck (${allSlides.length} slides).`);
       logConversion('Merged PowerPoint files', 'merged.pptx');
-    } catch(e){ console.error(e); toast('Could not merge those files — check they are valid .pptx files.', true); }
+    } catch(e){ console.error(e); toast('Could not merge those files: ' + (e && e.message ? e.message : 'unknown error'), true); }
     finally { showProgress(null); }
   });
 });
@@ -3947,7 +3967,7 @@ $('btnPptxSplit').addEventListener('click', () => {
       downloadBlob(await zip.generateAsync({ type:'blob' }), (file.name.replace(/\.[^.]+$/, '') || 'presentation') + '_split.zip');
       setStatus(`Split into ${chunks.length} files.`);
       logConversion('Split PowerPoint file', file.name);
-    } catch(e){ console.error(e); toast('Could not split that file — check your ranges.', true); }
+    } catch(e){ console.error(e); toast('Could not split that file: ' + (e && e.message ? e.message : 'unknown error'), true); }
     finally { showProgress(null); }
   });
   setTimeout(() => {
@@ -3989,7 +4009,7 @@ $('btnPptxReorder').addEventListener('click', () => {
         list.innerHTML = slides.map((s, i) => `<div class="reorder-item" data-idx="${i}" style="padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);cursor:grab;font-size:12.5px;">${i+1}. ${escapeXml(s.title)}</div>`).join('');
         Sortable.create(list, { animation:150 });
         document.getElementById('pptxReorderHint').style.display = 'block';
-      } catch(err){ console.error(err); toast('Could not read that file.', true); }
+      } catch(err){ console.error(err); toast('Could not read that file: ' + (err && err.message ? err.message : 'unknown error'), true); }
     });
   }, 0);
 });
@@ -4042,7 +4062,7 @@ $('btnPptxEdit').addEventListener('click', () => {
         const slides = await extractPptxSlidesData(file);
         container.innerHTML = '';
         slides.forEach(s => container.appendChild(pptxSlideEditorBlock(s)));
-      } catch(err){ console.error(err); toast('Could not read that file.', true); }
+      } catch(err){ console.error(err); toast('Could not read that file: ' + (err && err.message ? err.message : 'unknown error'), true); }
     });
     document.getElementById('pptxAddSlide').addEventListener('click', () => {
       container.appendChild(pptxSlideEditorBlock({ title: 'New slide', bullets: [] }));
