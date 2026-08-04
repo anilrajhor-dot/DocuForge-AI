@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>PDF Workbench — Core PDF Toolkit</title>
+<title>DocuForge AI — Intelligent Document Studio</title>
 <meta name="description" content="Merge, split, rotate, reorder and edit PDFs entirely in your browser. Nothing is ever uploaded.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%23113B34%22/><text x=%2250%22 y=%2266%22 font-size=%2252%22 text-anchor=%22middle%22 fill=%22%23F2A65A%22 font-family=%22Georgia%22>P</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%23113B34%22/><text x=%2250%22 y=%2266%22 font-size=%2252%22 text-anchor=%22middle%22 fill=%22%23F2A65A%22 font-family=%22Georgia%22>D</text></svg>">
 <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22PDF%20Workbench%22,%22short_name%22:%22PDF%20Workbench%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23F6F5F1%22,%22theme_color%22:%22%23113B34%22}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -323,6 +323,11 @@ body.dark .studio-tab.active{color:var(--pine);}
   min-height:54px; margin-bottom:0;
 }
 .ribbon .tool-btn svg, .ribbon-quick .tool-btn svg{width:21px; height:21px;}
+.beta-badge{
+  display:inline-block; background:var(--danger); color:#fff; font-size:8px; font-weight:700;
+  letter-spacing:.4px; padding:1px 4px; border-radius:3px; vertical-align:middle; font-family:var(--font-mono);
+}
+.ribbon .tool-btn .beta-badge{display:block; margin-top:2px;}
 .ribbon .tool-btn kbd, .ribbon-quick .tool-btn kbd{display:none;}
 .ribbon .hint{width:100%; padding:4px 2px 0; margin:0; font-size:10px;}
 
@@ -371,7 +376,7 @@ body.dark .studio-tab.active{color:var(--pine);}
 .fh-inputrow button:hover{border-color:var(--pine);}
 
 /* ===== Reader ===== */
-.reader-page{display:none; flex-direction:column; height:calc(100vh - 57px);}
+.reader-page{display:none; flex-direction:column; min-height:calc(100vh - 57px);}
 .reader-page.active{display:flex;}
 .reader-toolbar{
   display:flex; align-items:center; gap:6px; padding:8px 14px; background:var(--surface);
@@ -433,6 +438,9 @@ body.dark .studio-tab.active{color:var(--pine);}
   .landing-hero{padding:44px 16px 30px;}
   #dashboardRecent > div[style*="grid-template-columns"]{grid-template-columns:1fr !important;}
 }
+@media (max-width:560px){
+  header .tag{display:none;}
+}
 </style>
 </head>
 <body>
@@ -472,8 +480,8 @@ body.dark .studio-tab.active{color:var(--pine);}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>
   </button>
   <div class="brand">
-    <h1>PDF Workbench</h1>
-    <span class="tag">core toolkit</span>
+    <h1>DocuForge AI</h1>
+    <span class="tag">Intelligent Document Studio</span>
   </div>
   <div class="privacy-pill">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/></svg>
@@ -490,7 +498,9 @@ body.dark .studio-tab.active{color:var(--pine);}
       <button class="studio-tab" data-studio="ocr"><span class="st-icon">🖼</span> OCR Studio</button>
       <button class="studio-tab" data-studio="translate"><span class="st-icon">🌍</span> Translation Studio</button>
       <button class="studio-tab" data-studio="convert"><span class="st-icon">🔄</span> Conversion Studio</button>
+      <button class="studio-tab" data-studio="powerpoint"><span class="st-icon">📽️</span> PowerPoint Studio</button>
       <button class="studio-tab" data-studio="ai"><span class="st-icon">🤖</span> AI Studio</button>
+      <button class="studio-tab" data-studio="website"><span class="st-icon">🌐</span> Website Studio</button>
       <button class="studio-tab" data-studio="spreadsheet"><span class="st-icon">📊</span> Spreadsheet Studio</button>
       <button class="studio-tab" data-studio="security"><span class="st-icon">🔐</span> Security Studio</button>
       <button class="studio-tab" data-studio="batch"><span class="st-icon">📂</span> Batch Studio</button>
@@ -555,7 +565,6 @@ body.dark .studio-tab.active{color:var(--pine);}
       <div class="ribbon-panel" data-studio-panel="convert">
 <div class="tool-group">
 <button class="tool-btn" disabled="" id="btnPdfToWord"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"></path><path d="M8 13h8M8 17h8"></path></svg> PDF → Word (.docx)</button>
-<button class="tool-btn" disabled="" id="btnPdfToPptx"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="13" rx="1" width="18" x="3" y="5"></rect><path d="M8 21h8"></path></svg> PDF → PowerPoint (.pptx)</button>
 <button class="tool-btn" disabled="" id="btnPdfToExcel"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="1" width="18" x="3" y="4"></rect><path d="M3 10h18M9 4v16"></path></svg> PDF → Excel (.xlsx)</button>
 <button class="tool-btn" disabled="" id="btnPdfToCsv"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="1" width="18" x="3" y="4"></rect><path d="M3 10h18M9 4v16M15 4v16"></path></svg> PDF → CSV</button>
 <button class="tool-btn" disabled="" id="btnPdfToText"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h13"></path></svg> PDF → Text (.txt)</button>
@@ -571,15 +580,34 @@ body.dark .studio-tab.active{color:var(--pine);}
 <button class="tool-btn" id="btnFileToPdf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"></path><path d="M12 12v6m-3-3h6"></path></svg> Create PDF from file…</button>
 </div>
 </div>
+      <div class="ribbon-panel" data-studio-panel="powerpoint">
+<div class="tool-group">
+<h2>Convert</h2>
+<button class="tool-btn" disabled id="btnPdfToPptx"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="13" rx="1" width="18" x="3" y="5"></rect><path d="M8 21h8"></path></svg> PDF → PowerPoint (.pptx)</button>
+<button class="tool-btn" id="btnPptxToPdf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"></path><path d="M12 12v6m-3-3h6"></path></svg> PowerPoint → PDF…</button>
+</div>
+<div class="tool-group">
+<h2>Arrange</h2>
+<button class="tool-btn" id="btnPptxMerge"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="13" rx="1" width="18" x="3" y="5"></rect><path d="M8 21h8M3 3l4 5M21 3l-4 5"></path></svg> Merge PPTX files…</button>
+<button class="tool-btn" id="btnPptxSplit"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="13" rx="1" width="8" x="2" y="5"></rect><rect height="13" rx="1" width="8" x="14" y="5"></rect></svg> Split PPTX…</button>
+<button class="tool-btn" id="btnPptxReorder"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg> Reorder slides…</button>
+</div>
+<p class="hint" style="padding:0 14px;margin:6px 0 0;">All PowerPoint tools here are structural, not visual: they work from each slide's extracted title and bullet text, not the original OOXML package. Backgrounds, images, custom layouts, and fonts aren't preserved — the same honest limit as the PDF ⇄ PowerPoint conversion above.</p>
+</div>
       <div class="ribbon-panel" data-studio-panel="ai">
 <div class="tool-group">
 <button class="tool-btn" id="btnAiTools"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z"></path><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"></path></svg> AI text tools…</button>
 <button class="tool-btn" disabled id="btnChatPdf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"></path></svg> Chat with this PDF…</button>
-<button class="tool-btn" id="btnGenWebsite"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"></path></svg> Generate a website…</button>
 <button class="tool-btn" id="btnVoiceToText"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"></path><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"></path></svg> Voice to text…</button>
 <button class="tool-btn" id="btnReadAloud"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19 12a4 4 0 00-2.5-3.7M22 12a7 7 0 00-4-6.3"></path></svg> Read aloud…</button>
 <button class="tool-btn" disabled="" id="btnAnalyze"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.35-4.35"></path></svg> Analyze document…</button>
 <button class="tool-btn" disabled="" id="btnDupPages"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="14" rx="1" width="12" x="3" y="6"></rect><rect height="14" rx="1" width="12" x="9" y="2"></rect></svg> Detect duplicate pages</button>
+</div>
+</div>
+      <div class="ribbon-panel" data-studio-panel="website">
+<div class="tool-group">
+<button class="tool-btn" id="btnGenWebsite"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"></path></svg> Generate a website…</button>
+<p class="hint" style="padding:0 14px;margin:6px 0 0;">Uses AI (your own API key) to write a complete, single-file website from a description — same as the AI tools, just given its own home since it's a substantial feature on its own.</p>
 </div>
 </div>
       <div class="ribbon-panel" data-studio-panel="spreadsheet">
@@ -594,8 +622,8 @@ body.dark .studio-tab.active{color:var(--pine);}
 <button class="tool-btn" disabled="" id="btnSign"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M3 17c2-4 3-2 5-6s2 3 4-1 3 2 5-2M4 21h16"></path></svg> Sign PDF…</button>
 <button class="tool-btn" disabled="" id="btnFillForm"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><path d="M7 9h10M7 13h6"></path></svg> Fill form fields…</button>
 <button class="tool-btn" disabled="" id="btnFlattenForm"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><path d="M7 14l3 3 7-8"></path></svg> Flatten form</button>
-<button class="tool-btn" disabled id="btnEncrypt"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 018 0v4"></path></svg> Set password (beta)…</button>
-<p class="hint" style="padding:0 14px;margin:6px 0 0;">Password protection uses a community fork of the core PDF library, not the well-established one the rest of this app relies on — test that your protected file actually opens with the password before trusting it for anything sensitive. Cryptographic digital signatures still aren't supported; that genuinely requires a certificate authority.</p>
+<button class="tool-btn" disabled id="btnEncrypt"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 018 0v4"></path></svg> Set password <span class="beta-badge">BETA</span></button>
+<p class="hint" style="padding:0 14px;margin:6px 0 0;">Password protection uses a community fork of the core PDF library, not the well-established one the rest of this app relies on — test that your protected file actually opens with the password before trusting it for anything sensitive. <strong>Not recommended for confidential or legally sensitive documents until more thoroughly validated.</strong> Cryptographic digital signatures still aren't supported; that genuinely requires a certificate authority.</p>
 </div>
 </div>
       <div class="ribbon-panel" data-studio-panel="batch">
@@ -659,10 +687,16 @@ body.dark .studio-tab.active{color:var(--pine);}
       <p>Translate pasted text or a whole PDF across 38 languages, side by side. This sends the text you choose (never the file itself) to a translation service — the only exception to "everything stays on your device" besides AI tools.</p>
 
       <h3 style="margin-top:18px;font-size:14px;">🔄 Document Conversion</h3>
-      <p>PDF to and from Word, Excel, PowerPoint, CSV, HTML, JSON, XML, RTF, ODT/ODS/ODP, EPUB, and images. These carry over structure and text, not always exact original formatting — that's an honest limit of any browser-only conversion, not just this one.</p>
+      <p>PDF to and from Word, Excel, CSV, HTML, JSON, XML, RTF, ODT/ODS/ODP, EPUB, and images. These carry over structure and text, not always exact original formatting — that's an honest limit of any browser-only conversion, not just this one.</p>
+
+      <h3 style="margin-top:18px;font-size:14px;">📽️ PowerPoint Studio</h3>
+      <p>Converts both directions: PDF → PowerPoint and PowerPoint → PDF, each page/slide mapped one-to-one. Structural, not visual — text and titles carry over, original slide design doesn't.</p>
 
       <h3 style="margin-top:18px;font-size:14px;">🤖 AI Assistant</h3>
-      <p>Summarize, rewrite, simplify, generate meeting minutes, review a contract, chat with a PDF, or generate a whole website — all using your own Anthropic or OpenAI API key, entered once and optionally remembered in your browser. There's no backend here to provide a shared key.</p>
+      <p>Summarize, rewrite, simplify, generate meeting minutes, review a contract, or chat with a PDF — all using your own Anthropic or OpenAI API key, entered once and optionally remembered in your browser. There's no backend here to provide a shared key.</p>
+
+      <h3 style="margin-top:18px;font-size:14px;">🌐 Website Studio</h3>
+      <p>Describe a site — name, tagline, sections, style — and get a complete, unique single-file HTML website back, live-previewed and ready to download. Uses the same AI key as AI Studio.</p>
 
       <h3 style="margin-top:18px;font-size:14px;">📊 Spreadsheet Tools</h3>
       <p>Turn a spreadsheet into a chart, digitize numbers out of a chart <em>image</em> (manual calibration — no software can reliably read an arbitrary chart automatically), or calculate period-by-period interest from a bank statement.</p>
@@ -975,6 +1009,7 @@ function setToolsEnabled(on){
    'btnPdfToXml','btnPdfToSvg','btnPdfToRtf','btnPdfToOdt','btnPdfToOds','btnPdfToOdp','btnPdfToEpub',
    'btnTranslatePdf','btnAnalyze','btnDupPages','btnChatPdf'].forEach(id=>{
     $(id).disabled = !on;
+    $(id).title = on ? '' : 'Open a PDF first to use this tool';
   });
   $('toolbar').style.display = on ? 'flex' : 'none';
   grid.classList.toggle('empty-hide', !on);
@@ -1379,7 +1414,7 @@ async function editMetadata({title, author, subject, keywords}){
     doc.setAuthor(author || '');
     doc.setSubject(subject || '');
     doc.setKeywords((keywords||'').split(',').map(k=>k.trim()).filter(Boolean));
-    doc.setProducer('PDF Workbench (browser-only)');
+    doc.setProducer('DocuForge AI (browser-only)');
   }, 'Metadata updated.');
 }
 async function getMetadata(){
@@ -1885,6 +1920,22 @@ function extractPptxSlideLines(xml){
     return decodeXmlEntities(runs.map(r => r.replace(/^<a:t>|<\/a:t>$/g,'')).join(''));
   });
 }
+/* ---------- Shared: extract {title, bullets} per slide from a .pptx ---------- */
+async function extractPptxSlidesData(file){
+  const buf = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(buf);
+  const slideFiles = Object.keys(zip.files)
+    .filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n))
+    .sort((a,b) => parseInt(a.match(/slide(\d+)\.xml/)[1]) - parseInt(b.match(/slide(\d+)\.xml/)[1]));
+  if(!slideFiles.length) throw new Error('No slides found in this file.');
+  const slides = [];
+  for(const f of slideFiles){
+    const lines = extractPptxSlideLines(await zip.file(f).async('string'));
+    const nonEmpty = lines.filter(l => l.trim());
+    slides.push({ title: nonEmpty[0] || 'Untitled slide', bullets: nonEmpty.slice(1) });
+  }
+  return slides;
+}
 async function convertPptxFileToPdf(file){
   const buf = await file.arrayBuffer();
   const zip = await JSZip.loadAsync(buf);
@@ -1963,11 +2014,11 @@ ${slides.map((_,i)=>`<Override PartName="/ppt/slides/slide${i+1}.xml" ContentTyp
 </Relationships>`);
   zip.file('docProps/core.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-<dc:title>Presentation</dc:title><dc:creator>PDF Workbench</dc:creator>
+<dc:title>Presentation</dc:title><dc:creator>DocuForge AI</dc:creator>
 </cp:coreProperties>`);
   zip.file('docProps/app.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
-<Application>PDF Workbench</Application>
+<Application>DocuForge AI</Application>
 </Properties>`);
   zip.file('ppt/presentation.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
@@ -2990,25 +3041,42 @@ async function openReaderPdf(bytes, key){
   readerFileKey = key || null;
   $('readerEmpty').style.display = 'none';
   $('readerPdfView').style.display = 'flex';
-  readerPdfDoc = await pdfjsLib.getDocument({ data: bytes.slice ? bytes.slice() : bytes }).promise;
-  readerPdfPageCount = readerPdfDoc.numPages;
-  const saved = readerFileKey ? readerLoadProgress(readerFileKey) : null;
-  readerPdfCurrentPage = (saved && saved >= 1 && saved <= readerPdfPageCount) ? saved : 1;
-  $('readerPrev').disabled = false; $('readerNext').disabled = false;
-  await renderReaderPdfPage();
+  $('readerPdfView').innerHTML = '<p class="hint">Loading…</p>';
+  try{
+    const dataForPdfjs = bytes instanceof Uint8Array ? bytes.slice() : new Uint8Array(bytes);
+    readerPdfDoc = await pdfjsLib.getDocument({ data: dataForPdfjs }).promise;
+    readerPdfPageCount = readerPdfDoc.numPages;
+    if(!readerPdfPageCount) throw new Error('This PDF has no pages.');
+    const saved = readerFileKey ? readerLoadProgress(readerFileKey) : null;
+    readerPdfCurrentPage = (saved && saved >= 1 && saved <= readerPdfPageCount) ? saved : 1;
+    $('readerPrev').disabled = false; $('readerNext').disabled = false;
+    await renderReaderPdfPage();
+  } catch(e){
+    console.error('Reader PDF open failed:', e);
+    $('readerPdfView').innerHTML = `<p class="hint" style="color:var(--danger);">Could not open this PDF for reading: ${(e && e.message) || 'unknown error'}.</p>`;
+    toast('Could not open this PDF for reading.', true);
+  }
 }
 async function renderReaderPdfPage(){
-  const page = await readerPdfDoc.getPage(readerPdfCurrentPage);
-  const viewport = page.getViewport({ scale: readerPdfZoom });
-  const canvas = document.createElement('canvas');
-  canvas.width = viewport.width; canvas.height = viewport.height;
-  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-  const container = $('readerPdfView');
-  container.innerHTML = '';
-  container.appendChild(canvas);
-  $('readerPageIndicator').textContent = `Page ${readerPdfCurrentPage} / ${readerPdfPageCount}`;
-  $('readerZoomLevel').textContent = Math.round((readerPdfZoom / 1.3) * 100) + '%';
-  readerSaveProgress();
+  try{
+    const page = await readerPdfDoc.getPage(readerPdfCurrentPage);
+    const viewport = page.getViewport({ scale: readerPdfZoom });
+    if(!viewport.width || !viewport.height) throw new Error('This page has no visible size.');
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(viewport.width));
+    canvas.height = Math.max(1, Math.round(viewport.height));
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    const container = $('readerPdfView');
+    container.innerHTML = '';
+    container.appendChild(canvas);
+    $('readerPageIndicator').textContent = `Page ${readerPdfCurrentPage} / ${readerPdfPageCount}`;
+    $('readerZoomLevel').textContent = Math.round((readerPdfZoom / 1.3) * 100) + '%';
+    readerSaveProgress();
+  } catch(e){
+    console.error('Reader page render failed:', e);
+    $('readerPdfView').innerHTML = `<p class="hint" style="color:var(--danger);">Could not render this page: ${(e && e.message) || 'unknown error'}.</p>`;
+    toast('Could not render this page.', true);
+  }
 }
 
 async function resolveEpubImages(zip, dir, html){
@@ -3522,6 +3590,127 @@ $('btnDupPages').addEventListener('click', async () => {
   } finally { showProgress(null); }
 });
 
+$('btnPptxToPdf').addEventListener('click', () => {
+  openModal('PowerPoint → PDF', `
+    <div class="field"><label>PowerPoint file (.pptx)</label><input type="file" id="pptxFile" accept=".pptx"></div>
+    <p class="hint">Reads each slide's title and body text and lays it out one slide per PDF page, using the deck's own aspect ratio.</p>
+  `, async () => {
+    const file = document.getElementById('pptxFile').files[0];
+    if(!file){ toast('Choose a .pptx file first.', true); return; }
+    setStatus('Converting PowerPoint file…'); showProgress(20);
+    try{
+      const result = await convertPptxFileToPdf(file);
+      const name = file.name.replace(/\.[^.]+$/, '') + '.pdf';
+      downloadBlob(new Blob([result.bytes], { type:'application/pdf' }), name);
+      setStatus(`Created ${name} from ${result.count} slide(s).`);
+      logConversion('PowerPoint → PDF', file.name);
+    } catch(e){ console.error(e); toast('Could not convert that PowerPoint file — it may use a format this tool cannot read.', true); }
+    finally { showProgress(null); }
+  });
+});
+
+$('btnPptxMerge').addEventListener('click', () => {
+  openModal('Merge PowerPoint files', `
+    <div class="field"><label>PPTX files (merged in the order selected)</label><input type="file" id="pptxMergeFiles" accept=".pptx" multiple></div>
+    <p class="hint">Structural merge: combines each deck's slide text (title + bullets) in order. Original slide design, images, and layouts aren't preserved — same honest limit as PDF ⇄ PowerPoint conversion.</p>
+  `, async () => {
+    const files = Array.from(document.getElementById('pptxMergeFiles').files || []);
+    if(files.length < 2){ toast('Choose at least two .pptx files.', true); return; }
+    setStatus('Merging PowerPoint files…'); showProgress(20);
+    try{
+      let allSlides = [];
+      for(const f of files) allSlides = allSlides.concat(await extractPptxSlidesData(f));
+      const bytes = await buildPptxFromSlides(allSlides);
+      downloadBlob(new Blob([bytes], { type:'application/vnd.openxmlformats-officedocument.presentationml.presentation' }), 'merged.pptx');
+      setStatus(`Merged ${files.length} files into one deck (${allSlides.length} slides).`);
+      logConversion('Merged PowerPoint files', 'merged.pptx');
+    } catch(e){ console.error(e); toast('Could not merge those files — check they are valid .pptx files.', true); }
+    finally { showProgress(null); }
+  });
+});
+
+$('btnPptxSplit').addEventListener('click', () => {
+  openModal('Split PowerPoint', `
+    <div class="field"><label>PPTX file</label><input type="file" id="pptxSplitFile" accept=".pptx"></div>
+    <div class="radio-row">
+      <label><input type="radio" name="pptxSplitMode" value="every" checked> Every N slides</label>
+      <label><input type="radio" name="pptxSplitMode" value="ranges"> Custom ranges</label>
+    </div>
+    <div class="field" id="pptxEveryField"><label>Slides per file (N)</label><input type="number" id="pptxEveryN" min="1" value="1"></div>
+    <div class="field" id="pptxRangesField" style="display:none;"><label>Ranges (e.g. 1-3, 4-4, 5-8)</label><input type="text" id="pptxRangesInput" placeholder="1-3, 4-4, 5-8"></div>
+    <p class="hint">Structural split — rebuilds each part from slide text. Downloads a .zip with one .pptx per part.</p>
+  `, async () => {
+    const file = document.getElementById('pptxSplitFile').files[0];
+    if(!file){ toast('Choose a .pptx file first.', true); return; }
+    setStatus('Splitting PowerPoint file…'); showProgress(20);
+    try{
+      const slides = await extractPptxSlidesData(file);
+      const mode = document.querySelector('input[name=pptxSplitMode]:checked').value;
+      let chunks = [];
+      if(mode === 'every'){
+        const n = parseInt(document.getElementById('pptxEveryN').value) || 1;
+        for(let s = 0; s < slides.length; s += n) chunks.push(slides.slice(s, s + n));
+      } else {
+        const raw = document.getElementById('pptxRangesInput').value;
+        const ranges = raw.split(',').map(s => s.trim()).filter(Boolean).map(s => {
+          const [a, b] = s.split('-').map(x => parseInt(x.trim()));
+          return [a, isNaN(b) ? a : b];
+        });
+        chunks = ranges.map(([a, b]) => slides.slice(Math.max(0, a - 1), b)).filter(c => c.length);
+      }
+      if(!chunks.length){ toast('No valid ranges produced any slides.', true); return; }
+      const zip = new JSZip();
+      for(let i = 0; i < chunks.length; i++) zip.file(`part${i+1}.pptx`, await buildPptxFromSlides(chunks[i]));
+      downloadBlob(await zip.generateAsync({ type:'blob' }), (file.name.replace(/\.[^.]+$/, '') || 'presentation') + '_split.zip');
+      setStatus(`Split into ${chunks.length} files.`);
+      logConversion('Split PowerPoint file', file.name);
+    } catch(e){ console.error(e); toast('Could not split that file — check your ranges.', true); }
+    finally { showProgress(null); }
+  });
+  setTimeout(() => {
+    document.querySelectorAll('input[name=pptxSplitMode]').forEach(r => r.addEventListener('change', (e) => {
+      document.getElementById('pptxEveryField').style.display = e.target.value === 'every' ? 'block' : 'none';
+      document.getElementById('pptxRangesField').style.display = e.target.value === 'ranges' ? 'block' : 'none';
+    }));
+  }, 0);
+});
+
+$('btnPptxReorder').addEventListener('click', () => {
+  openModal('Reorder slides', `
+    <div class="field"><label>PPTX file</label><input type="file" id="pptxReorderFile" accept=".pptx"></div>
+    <div id="pptxReorderList" style="display:flex;flex-direction:column;gap:4px;max-height:280px;overflow-y:auto;"></div>
+    <p class="hint" id="pptxReorderHint" style="display:none;margin:0;">Drag to reorder, then confirm. Structural rebuild — titles and bullets carry over, original design doesn't.</p>
+  `, async () => {
+    const items = Array.from(document.querySelectorAll('#pptxReorderList .reorder-item'));
+    const slides = window.__pptxReorderSlides;
+    if(!items.length || !slides){ toast('Choose a file first.', true); return; }
+    const order = items.map(el => parseInt(el.dataset.idx));
+    const newSlides = order.map(i => slides[i]);
+    setStatus('Rebuilding presentation…'); showProgress(20);
+    try{
+      const bytes = await buildPptxFromSlides(newSlides);
+      downloadBlob(new Blob([bytes], { type:'application/vnd.openxmlformats-officedocument.presentationml.presentation' }), 'reordered.pptx');
+      setStatus('Slides reordered.');
+      logConversion('Reordered PowerPoint slides', 'reordered.pptx');
+    } catch(e){ console.error(e); toast('Could not rebuild the presentation.', true); }
+    finally { showProgress(null); }
+  });
+  setTimeout(() => {
+    document.getElementById('pptxReorderFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      try{
+        const slides = await extractPptxSlidesData(file);
+        window.__pptxReorderSlides = slides;
+        const list = document.getElementById('pptxReorderList');
+        list.innerHTML = slides.map((s, i) => `<div class="reorder-item" data-idx="${i}" style="padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);cursor:grab;font-size:12.5px;">${i+1}. ${escapeXml(s.title)}</div>`).join('');
+        Sortable.create(list, { animation:150 });
+        document.getElementById('pptxReorderHint').style.display = 'block';
+      } catch(err){ console.error(err); toast('Could not read that file.', true); }
+    });
+  }, 0);
+});
+
 $('btnFileToPdf').addEventListener('click', () => {
   openModal('Create PDF from file', `
     <div class="field"><label>File</label><input type="file" id="c2pFile" accept=".docx,.pptx,.xlsx,.xls,.csv,.txt,.md,.html,.htm"></div>
@@ -3717,7 +3906,7 @@ $('btnSign').addEventListener('click', () => {
 
 $('btnEncrypt').addEventListener('click', () => {
   openModal('Set password (beta)', `
-    <p class="hint" style="margin:0;">Uses a community fork of the core PDF library — real encryption, but less proven than the rest of this app. Open the resulting file with your password before relying on it.</p>
+    <p class="hint" style="margin:0;">Uses a community fork of the core PDF library — real encryption, but less proven than the rest of this app. Open the resulting file with your password before relying on it. <strong>Not recommended for confidential or legally sensitive documents until more thoroughly validated.</strong></p>
     <div class="field"><label>Password to open the file</label><input type="password" id="encUserPw" placeholder="Required"></div>
     <div class="field"><label>Owner password (optional — controls the permissions below; if left blank, the password above is used for both)</label><input type="password" id="encOwnerPw"></div>
     <div class="field"><label>Permissions once opened</label>
@@ -4870,7 +5059,8 @@ const HELP_FAQ = [
   { q: ['bates'], a: 'PDF Studio → Enhance → "Bates numbering…" — a prefix plus sequential zero-padded numbers across every page.' },
   { q: ['interest','bank statement'], a: 'Spreadsheet Studio → "Bank interest calculator…" reads a statement (PDF, Excel, or CSV) and calculates period-by-period interest from the daily closing balance and the rate you give it.' },
   { q: ['digitize','chart image','extract chart'], a: 'Spreadsheet Studio → "Digitize chart image…" — calibrate two known axis points, then click each data point; no software can read an arbitrary chart automatically.' },
-  { q: ['website','generate site'], a: 'AI Studio → "Generate a website…" — describe your site, get a complete single-file HTML site to preview, download, and deploy the same way as this app.' },
+  { q: ['website','generate site'], a: 'Website Studio → "Generate a website…" — describe your site, get a complete single-file HTML site to preview, download, and deploy the same way as this app.' },
+  { q: ['powerpoint','pptx','ppt','slide'], a: 'PowerPoint Studio: convert PDF ⇄ PowerPoint, merge several .pptx files, split one into parts, or drag to reorder slides. All structural — titles and bullets carry over, original design doesn\u2019t.' },
   { q: ['recent','continue project'], a: 'The Dashboard tab shows Recent Files and lets you continue your last project — stored locally on this device via IndexedDB.' },
 ];
 function matchFaq(question){
