@@ -15,6 +15,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -441,6 +442,7 @@ body.dark .studio-tab.active{color:var(--pine);}
 <button class="tool-btn" id="btnImageTable"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="1" width="18" x="3" y="4"></rect><path d="M3 10h18M9 4v16M15 4v16"></path></svg> Extract table from image…</button>
 <button class="tool-btn" id="btnImagesToPdf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><circle cx="8.5" cy="9.5" r="1.5"></circle><path d="M21 15l-5-5-4 4-3-3-4 4"></path></svg> Combine images into PDF…</button>
 <button class="tool-btn" disabled="" id="btnPdfToImages"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><circle cx="8.5" cy="9.5" r="1.5"></circle><path d="M21 15l-5-5-4 4-3-3-4 4"></path></svg> PDF → Images…</button>
+<button class="tool-btn" id="btnQrReader"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="7" width="7" x="3" y="3"></rect><rect height="7" width="7" x="14" y="3"></rect><rect height="7" width="7" x="3" y="14"></rect><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"></path></svg> Read QR code…</button>
 </div>
 </div>
       <div class="ribbon-panel" data-studio-panel="translate">
@@ -464,6 +466,9 @@ body.dark .studio-tab.active{color:var(--pine);}
       <div class="ribbon-panel" data-studio-panel="ai">
 <div class="tool-group">
 <button class="tool-btn" id="btnAiTools"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z"></path><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"></path></svg> AI text tools…</button>
+<button class="tool-btn" disabled id="btnChatPdf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"></path></svg> Chat with this PDF…</button>
+<button class="tool-btn" id="btnVoiceToText"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"></path><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"></path></svg> Voice to text…</button>
+<button class="tool-btn" id="btnReadAloud"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19 12a4 4 0 00-2.5-3.7M22 12a7 7 0 00-4-6.3"></path></svg> Read aloud…</button>
 <button class="tool-btn" disabled="" id="btnAnalyze"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.35-4.35"></path></svg> Analyze document…</button>
 <button class="tool-btn" disabled="" id="btnDupPages"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="14" rx="1" width="12" x="3" y="6"></rect><rect height="14" rx="1" width="12" x="9" y="2"></rect></svg> Detect duplicate pages</button>
 </div>
@@ -643,7 +648,7 @@ function setToolsEnabled(on){
    'btnWatermark','btnPageNum','btnHeaderFooter','btnFillForm','btnFlattenForm','btnSign',
    'btnCompress','btnMetadata','btnUndo','btnRedo','btnReset','btnOcrPdf',
    'btnPdfToWord','btnPdfToPptx','btnPdfToExcel','btnPdfToCsv','btnPdfToText','btnPdfToHtml','btnPdfToJson','btnPdfToImages',
-   'btnTranslatePdf','btnAnalyze','btnDupPages'].forEach(id=>{
+   'btnTranslatePdf','btnAnalyze','btnDupPages','btnChatPdf'].forEach(id=>{
     $(id).disabled = !on;
   });
   $('toolbar').style.display = on ? 'flex' : 'none';
@@ -1384,6 +1389,24 @@ async function convertFileToPdf(file){
    (roughly 500 words/day anonymously, more if you supply an email — MyMemory
    raises the limit for a registered address). Long text is chunked
    automatically since each request is capped at a few hundred characters. */
+/* ---------- OCR languages (Tesseract.js) ----------
+   Trimmed to languages with solid, well-tested Tesseract trained data,
+   same reasoning as the translation list — a longer list looks generous
+   but includes pairs that recognize poorly in practice. */
+const OCR_LANGS = [
+  ['eng','English'], ['hin','Hindi'], ['eng+hin','English + Hindi'],
+  ['ben','Bengali'], ['tam','Tamil'], ['tel','Telugu'], ['mar','Marathi'],
+  ['guj','Gujarati'], ['pan','Punjabi'], ['urd','Urdu'], ['kan','Kannada'],
+  ['mal','Malayalam'], ['ori','Odia'], ['nep','Nepali'],
+  ['spa','Spanish'], ['fra','French'], ['deu','German'], ['por','Portuguese'],
+  ['ita','Italian'], ['rus','Russian'], ['chi_sim','Chinese (Simplified)'],
+  ['jpn','Japanese'], ['kor','Korean'], ['ara','Arabic'],
+];
+function ocrLangOptions(selectId){
+  const opts = OCR_LANGS.map(([c,n]) => `<option value="${c}">${n}</option>`).join('');
+  return `<select id="${selectId}">${opts}</select>`;
+}
+
 const LANGS = [
   ['en','English'],['hi','Hindi'],['bn','Bengali'],['ta','Tamil'],['te','Telugu'],['mr','Marathi'],
   ['gu','Gujarati'],['pa','Punjabi'],['ur','Urdu'],['kn','Kannada'],['ml','Malayalam'],['or','Odia'],
@@ -2278,6 +2301,9 @@ const AI_OPS = {
   keywords: t => `Extract the 10-15 most important keywords or key phrases from the following text, as a comma-separated list:\n\n${t}`,
   actions: t => `Extract all action items, tasks, or to-dos mentioned in the following text, as a bullet list. If there are none, say so:\n\n${t}`,
   dates: t => `Extract all dates and deadlines mentioned in the following text with brief context for each, as a bullet list:\n\n${t}`,
+  minutes: t => `Based on the following meeting notes or transcript, produce structured meeting minutes with sections for Attendees (if mentioned), Key Discussion Points, Decisions Made, and Action Items (with owners, if mentioned):\n\n${t}`,
+  contract: t => `Review the following contract text and summarize: the parties involved, key obligations of each party, important dates/deadlines, termination conditions, and any unusual or risky clauses worth a closer look. This is a structural summary aid, not legal advice:\n\n${t}`,
+  financial: t => `Analyze the following financial statement text and summarize the key figures (revenue, expenses, profit/loss, assets, liabilities where present), notable trends, and anything that stands out. This is a summary aid, not financial advice:\n\n${t}`,
 };
 async function callAI(provider, apiKey, model, prompt){
   if(provider === 'anthropic'){
@@ -2493,7 +2519,7 @@ $('btnOcrImage').addEventListener('click', () => {
   openModal('Extract text from image', `
     <div class="field"><label>Image file (JPG, PNG, WEBP, BMP…)</label><input type="file" id="ocrImgFile" accept="image/*"></div>
     <div class="field"><label>Language</label>
-      <select id="ocrImgLang"><option value="eng">English</option><option value="hin">Hindi</option><option value="eng+hin">English + Hindi</option></select>
+      ${ocrLangOptions('ocrImgLang')}
     </div>
     <p class="hint">Runs entirely in your browser. The first time you use a language, your browser downloads a small recognition model — no document or image content is ever sent anywhere.</p>
   `, async () => {
@@ -2514,7 +2540,7 @@ $('btnOcrPdf').addEventListener('click', () => {
       <select id="ocrPdfScope"><option value="all">All pages</option><option value="selected">Selected pages only</option></select>
     </div>
     <div class="field"><label>Language</label>
-      <select id="ocrPdfLang"><option value="eng">English</option><option value="hin">Hindi</option><option value="eng+hin">English + Hindi</option></select>
+      ${ocrLangOptions('ocrPdfLang')}
     </div>
     <p class="hint">Recognizes the text on each page and adds an invisible, selectable text layer — the page looks exactly the same, but becomes searchable and copyable. Works best on clear scans; large files take a little while since every page is processed right here in your browser.</p>
   `, async () => {
@@ -2847,7 +2873,7 @@ $('btnBatch').addEventListener('click', () => {
       </select>
     </div>
     <div class="field" id="batchLangField" style="display:none;"><label>OCR language</label>
-      <select id="batchLang"><option value="eng">English</option><option value="hin">Hindi</option><option value="eng+hin">English + Hindi</option></select>
+      ${ocrLangOptions('batchLang')}
     </div>
     <div class="field" id="batchWmField" style="display:none;"><label>Watermark text</label><input type="text" id="batchWmText" value="CONFIDENTIAL"></div>
     <p class="hint" id="batchMergeHint" style="display:none;">Files are merged in the order they're listed above, into a single PDF.</p>
@@ -2875,6 +2901,250 @@ $('btnAnalyze').addEventListener('click', async () => {
     showAnalysisResult(docType, fields, ($('outName').value || 'document'));
     setStatus('Analysis complete.');
   } finally { showProgress(null); }
+});
+
+$('btnAiTools').addEventListener('click', () => {
+  const savedKey = localStorage.getItem('pdfworkbench-ai-key') || '';
+  const savedProvider = localStorage.getItem('pdfworkbench-ai-provider') || 'anthropic';
+  openModal('AI text tools', `
+    <p class="hint" style="margin:0;">This is one of two tools (besides Translate) that goes over the internet — your text is sent directly from your browser to the AI provider you choose, using your own API key. Nothing passes through any server of ours.</p>
+    <div class="field"><label>Provider</label><select id="aiProvider"><option value="anthropic" ${savedProvider==='anthropic'?'selected':''}>Anthropic (Claude)</option><option value="openai" ${savedProvider==='openai'?'selected':''}>OpenAI</option></select></div>
+    <div class="field"><label>API key</label><input type="password" id="aiKey" value="${savedKey}" placeholder="sk-..."></div>
+    <div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="aiRemember" style="width:auto;" ${savedKey?'checked':''}><label style="margin:0;font-weight:400;" for="aiRemember">Remember this key in this browser only</label></div>
+    <div class="field"><label>Model (optional — leave blank for a sensible default)</label><input type="text" id="aiModel" placeholder="e.g. claude-haiku-4-5-20251001"></div>
+    <div class="field"><label>Source text</label>
+      <select id="aiSource">
+        <option value="pdf" ${workingBytes ? '' : 'disabled'}>This PDF's text</option>
+        <option value="paste">Paste text</option>
+      </select>
+    </div>
+    <div class="field" id="aiPasteField" style="display:none;"><label>Text</label><textarea id="aiPasteText" style="min-height:120px;"></textarea></div>
+    <div class="field"><label>Task</label>
+      <select id="aiOp">
+        <option value="summarize">Summarize</option>
+        <option value="rewrite">Rewrite / improve clarity</option>
+        <option value="grammar">Fix grammar &amp; spelling</option>
+        <option value="simplify">Simplify language</option>
+        <option value="expand">Expand with more detail</option>
+        <option value="title">Generate title suggestions</option>
+        <option value="keywords">Generate keywords</option>
+        <option value="actions">Extract action items</option>
+        <option value="dates">Extract key dates</option>
+        <option value="minutes">Generate meeting minutes</option>
+        <option value="contract">Review contract</option>
+        <option value="financial">Analyze financial statement</option>
+      </select>
+    </div>
+  `, async () => {
+    const provider = document.getElementById('aiProvider').value;
+    const apiKey = document.getElementById('aiKey').value.trim();
+    const remember = document.getElementById('aiRemember').checked;
+    const model = document.getElementById('aiModel').value.trim();
+    const source = document.getElementById('aiSource').value;
+    const op = document.getElementById('aiOp').value;
+    if(!apiKey){ toast('Enter your API key.', true); return; }
+    if(remember){ localStorage.setItem('pdfworkbench-ai-key', apiKey); localStorage.setItem('pdfworkbench-ai-provider', provider); }
+    else { localStorage.removeItem('pdfworkbench-ai-key'); }
+    let text = '';
+    if(source === 'pdf'){
+      const pages = await getPdfPagesTextItems();
+      text = pages.map(p => groupIntoLines(p.items).map(lineToText).join('\n')).join('\n\n');
+      if(!text.trim()){ toast('No extractable text — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    } else {
+      text = document.getElementById('aiPasteText').value.trim();
+      if(!text){ toast('Paste some text first.', true); return; }
+    }
+    if(text.length > 15000){ text = text.slice(0, 15000); }
+    setStatus('Calling AI…'); showProgress(20);
+    try{
+      const prompt = AI_OPS[op](text);
+      const result = await callAI(provider, apiKey, model, prompt);
+      showTextResult('AI result', result, 'ai_' + op + '.txt');
+      setStatus('AI task complete.');
+    } catch(e){ console.error(e); toast('AI request failed: ' + e.message, true); }
+    finally { showProgress(null); }
+  });
+  setTimeout(() => {
+    document.getElementById('aiSource').addEventListener('change', e => {
+      document.getElementById('aiPasteField').style.display = e.target.value === 'paste' ? 'block' : 'none';
+    });
+  }, 0);
+});
+
+$('btnImageTable').addEventListener('click', () => {
+  openModal('Extract table from image', `
+    <div class="field"><label>Image</label><input type="file" id="tblImgFile" accept="image/*"></div>
+    <div class="field"><label>Language</label>${ocrLangOptions('tblImgLang')}</div>
+    <p class="hint">Runs OCR, then groups words into rows/columns by their position on the page — works best on a clear, reasonably aligned table.</p>
+  `, async () => {
+    const file = document.getElementById('tblImgFile').files[0];
+    const lang = document.getElementById('tblImgLang').value;
+    if(!file){ toast('Choose an image first.', true); return; }
+    setStatus('Extracting table…'); showProgress(20);
+    try{
+      const rows = await extractTableFromImage(file, lang);
+      showTableResult(rows, file.name.replace(/\.[^.]+$/, ''));
+    } catch(e){ console.error(e); toast('Could not extract a table from that image.', true); }
+    finally { showProgress(null); }
+  });
+});
+
+$('btnChatPdf').addEventListener('click', async () => {
+  const pages = await getPdfPagesTextItems();
+  const hasText = pages.some(p => p.items.some(it => it.str.trim().length));
+  if(!hasText){ toast('No extractable text layer — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+  let context = pages.map(p => groupIntoLines(p.items).map(lineToText).join('\n')).join('\n\n');
+  if(context.length > 15000) context = context.slice(0, 15000);
+  const savedKey = localStorage.getItem('pdfworkbench-ai-key') || '';
+  const savedProvider = localStorage.getItem('pdfworkbench-ai-provider') || 'anthropic';
+  openModal('Chat with this PDF', `
+    <div class="field row">
+      <div><label>Provider</label><select id="chatProvider"><option value="anthropic" ${savedProvider==='anthropic'?'selected':''}>Anthropic (Claude)</option><option value="openai" ${savedProvider==='openai'?'selected':''}>OpenAI</option></select></div>
+      <div><label>API key</label><input type="password" id="chatKey" value="${savedKey}" placeholder="sk-..."></div>
+    </div>
+    <div id="chatMessages" style="max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:4px;padding:8px;background:var(--bg);display:flex;flex-direction:column;gap:8px;"></div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="chatInput" placeholder="Ask something about this PDF…" style="flex:1;padding:8px 9px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);">
+      <button class="btn primary" id="chatSend" type="button">Send</button>
+    </div>
+    <p class="hint">Sends this PDF's text plus your question to the AI provider above, using your own API key. Nothing else leaves your browser.</p>
+  `, async () => {});
+  $('modalConfirm').style.display = 'none';
+  $('modalCancel').textContent = 'Close';
+  setTimeout(() => {
+    const history = [];
+    const msgsEl = document.getElementById('chatMessages');
+    function addMsg(role, text){
+      const div = document.createElement('div');
+      div.style.cssText = role === 'user'
+        ? 'align-self:flex-end;background:var(--pine);color:#fff;padding:8px 10px;border-radius:8px;max-width:85%;font-size:13px;white-space:pre-wrap;'
+        : 'align-self:flex-start;background:var(--surface);border:1px solid var(--line);padding:8px 10px;border-radius:8px;max-width:85%;font-size:13px;white-space:pre-wrap;';
+      div.textContent = text;
+      msgsEl.appendChild(div);
+      msgsEl.scrollTop = msgsEl.scrollHeight;
+      return div;
+    }
+    async function send(){
+      const input = document.getElementById('chatInput');
+      const q = input.value.trim();
+      if(!q) return;
+      const provider = document.getElementById('chatProvider').value;
+      const apiKey = document.getElementById('chatKey').value.trim();
+      if(!apiKey){ toast('Enter your API key.', true); return; }
+      addMsg('user', q);
+      input.value = '';
+      history.push(`Q: ${q}`);
+      const prompt = `You are answering questions about a document, using only the document text below. If the answer isn't in the document, say so.\n\nDocument text:\n${context}\n\nConversation so far:\n${history.join('\n')}\n\nAnswer the latest question concisely.`;
+      const thinking = addMsg('assistant', '…thinking…');
+      try{
+        const answer = await callAI(provider, apiKey, '', prompt);
+        thinking.textContent = answer;
+        history.push(`A: ${answer}`);
+      } catch(e){ thinking.textContent = 'Error: ' + e.message; }
+    }
+    document.getElementById('chatSend').addEventListener('click', send);
+    document.getElementById('chatInput').addEventListener('keydown', (e) => { if(e.key === 'Enter') send(); });
+  }, 0);
+});
+
+$('btnVoiceToText').addEventListener('click', () => {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition){ toast('Voice input isn\u2019t supported in this browser — try Chrome, or Safari on iOS/macOS.', true); return; }
+  openModal('Voice to text', `
+    <button class="btn primary" id="voiceStart" type="button">🎙️ Start recording</button>
+    <button class="btn ghost" id="voiceStop" type="button" style="display:none;">⏹ Stop</button>
+    <textarea id="voiceText" readonly style="min-height:160px;margin-top:4px;"></textarea>
+    <p class="hint">Uses your browser's built-in speech recognition — audio is processed by your browser/OS, not sent to us. You'll be asked for microphone permission.</p>
+  `, async () => {
+    downloadBlob(new Blob([document.getElementById('voiceText').value], {type:'text/plain'}), 'voice_transcript.txt');
+  });
+  $('modalConfirm').textContent = 'Download .txt';
+  setTimeout(() => {
+    const rec = new SpeechRecognition();
+    rec.continuous = true; rec.interimResults = true; rec.lang = 'en-US';
+    let finalText = '';
+    rec.onresult = (e) => {
+      let interim = '';
+      for(let i = e.resultIndex; i < e.results.length; i++){
+        if(e.results[i].isFinal) finalText += e.results[i][0].transcript + ' ';
+        else interim += e.results[i][0].transcript;
+      }
+      document.getElementById('voiceText').value = finalText + interim;
+    };
+    rec.onerror = (e) => toast('Voice recognition error: ' + e.error, true);
+    document.getElementById('voiceStart').addEventListener('click', () => {
+      rec.start();
+      document.getElementById('voiceStart').style.display = 'none';
+      document.getElementById('voiceStop').style.display = 'inline-flex';
+    });
+    document.getElementById('voiceStop').addEventListener('click', () => {
+      rec.stop();
+      document.getElementById('voiceStop').style.display = 'none';
+      document.getElementById('voiceStart').style.display = 'inline-flex';
+    });
+  }, 0);
+});
+
+$('btnReadAloud').addEventListener('click', async () => {
+  if(!('speechSynthesis' in window)){ toast('Text-to-speech isn\u2019t supported in this browser.', true); return; }
+  let text = '';
+  if(workingBytes){
+    const pages = await getPdfPagesTextItems();
+    text = pages.map(p => groupIntoLines(p.items).map(lineToText).join(' ')).join(' ').slice(0, 8000);
+  }
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  openModal('Read aloud', `
+    <div class="field"><label>Text</label><textarea id="ttsText" style="min-height:130px;">${esc(text)}</textarea></div>
+    <div class="field row">
+      <div><label>Voice</label><select id="ttsVoice"></select></div>
+      <div><label>Rate</label><input type="number" id="ttsRate" min="0.5" max="2" step="0.1" value="1"></div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn primary" id="ttsPlay" type="button">▶ Play</button>
+      <button class="btn ghost" id="ttsPause" type="button">⏸ Pause</button>
+      <button class="btn ghost" id="ttsStop" type="button">⏹ Stop</button>
+    </div>
+  `, async () => {});
+  $('modalConfirm').style.display = 'none';
+  $('modalCancel').textContent = 'Close';
+  setTimeout(() => {
+    const voiceSel = document.getElementById('ttsVoice');
+    function loadVoices(){ voiceSel.innerHTML = speechSynthesis.getVoices().map((v,i) => `<option value="${i}">${v.name} (${v.lang})</option>`).join(''); }
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+    document.getElementById('ttsPlay').addEventListener('click', () => {
+      speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(document.getElementById('ttsText').value);
+      const voices = speechSynthesis.getVoices();
+      const idx = parseInt(voiceSel.value);
+      if(voices[idx]) utter.voice = voices[idx];
+      utter.rate = parseFloat(document.getElementById('ttsRate').value) || 1;
+      speechSynthesis.speak(utter);
+    });
+    document.getElementById('ttsPause').addEventListener('click', () => speechSynthesis.pause());
+    document.getElementById('ttsStop').addEventListener('click', () => speechSynthesis.cancel());
+  }, 0);
+});
+
+$('btnQrReader').addEventListener('click', () => {
+  openModal('Read QR code', `
+    <div class="field"><label>Image containing a QR code</label><input type="file" id="qrFile" accept="image/*"></div>
+    <p class="hint">Reads standard QR codes from a photo or screenshot. 1D barcodes (UPC/EAN/Code128) aren't supported.</p>
+  `, async () => {
+    const file = document.getElementById('qrFile').files[0];
+    if(!file){ toast('Choose an image first.', true); return; }
+    try{
+      const img = await loadImageFromBytes(new Uint8Array(await file.arrayBuffer()), file.type || 'image/png');
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if(code) showTextResult('QR code contents', code.data, 'qr_result.txt');
+      else toast('No QR code found in that image.', true);
+    } catch(e){ console.error(e); toast('Could not read that image.', true); }
+  });
 });
 
 $('btnUndo').addEventListener('click', undo);
@@ -2984,9 +3254,26 @@ function dataUrlToBlob(dataUrl){
   for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
   return new Blob([arr], { type: mime });
 }
+function computeStats(data){
+  const n = data.length;
+  const sum = data.reduce((a,b) => a + b, 0);
+  const avg = n ? sum / n : 0;
+  const min = n ? Math.min(...data) : 0;
+  const max = n ? Math.max(...data) : 0;
+  return { n, sum, avg, min, max };
+}
 function showChartResult(labels, data, type, seriesLabel){
+  const s = computeStats(data);
+  const fmt = v => Number(v.toFixed(2)).toLocaleString();
   openModal('Chart', `
     <div style="background:#fff;padding:12px;border-radius:4px;overflow:auto;"><canvas id="chartCanvas" width="560" height="360"></canvas></div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;font-size:11.5px;text-align:center;">
+      <div><div class="mono" style="font-weight:600;font-size:13px;">${s.n}</div>Count</div>
+      <div><div class="mono" style="font-weight:600;font-size:13px;">${fmt(s.sum)}</div>Sum</div>
+      <div><div class="mono" style="font-weight:600;font-size:13px;">${fmt(s.avg)}</div>Average</div>
+      <div><div class="mono" style="font-weight:600;font-size:13px;">${fmt(s.min)}</div>Min</div>
+      <div><div class="mono" style="font-weight:600;font-size:13px;">${fmt(s.max)}</div>Max</div>
+    </div>
     <button class="btn ghost" id="chartPng" type="button" style="align-self:flex-start;">Download chart as PNG</button>
   `, async () => {});
   $('modalConfirm').style.display = 'none';
