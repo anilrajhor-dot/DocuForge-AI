@@ -456,7 +456,7 @@ body.dark .studio-tab.active{color:var(--pine);}
   <div style="padding:40px 20px 50px;">
     <div class="feature-grid">
       <div class="feature-card"><span class="fc-icon">📄</span><h3>PDF Tools</h3><p>Merge, split, rotate, crop, reorder, watermark, page numbers, headers/footers, forms, compress.</p></div>
-      <div class="feature-card"><span class="fc-icon">🖼</span><h3>OCR &amp; Image Tools</h3><p>Add a real, embedded searchable text layer to scans; extract text from photos, pull tables from images, build PDFs from images.</p></div>
+      <div class="feature-card"><span class="fc-icon">🖼</span><h3>OCR &amp; Image Tools</h3><p>Create searchable PDFs using OCR, with a real embedded text layer (where supported — accuracy depends on scan quality and language); extract text from photos, pull tables from images, build PDFs from images.</p></div>
       <div class="feature-card"><span class="fc-icon">🌍</span><h3>Translation</h3><p>Translate text or whole PDFs across 38 languages, side by side, exportable in four formats.</p></div>
       <div class="feature-card"><span class="fc-icon">🔄</span><h3>Document Conversion</h3><p>Convert PDF content into editable Word, Excel, PowerPoint, CSV, HTML, JSON, and images &mdash; and back again. Structure and text carry over; exact original formatting may not.</p></div>
       <div class="feature-card"><span class="fc-icon">🤖</span><h3>AI Assistant</h3><p>Summarize, rewrite, simplify, chat with a PDF, extract action items and dates &mdash; using your own API key.</p></div>
@@ -466,7 +466,7 @@ body.dark .studio-tab.active{color:var(--pine);}
     </div>
     <p class="hint" style="max-width:640px;margin:0 auto 8px;text-align:center;">Most PDF tools activate once you open a PDF in the editor &mdash; that's why some buttons start out greyed&nbsp;out.</p>
     <div class="landing-privacy">
-      <strong>Privacy, plainly:</strong> except when you explicitly use <strong>Translate</strong> or the <strong>AI Assistant</strong>, all document processing happens entirely inside your browser &mdash; nothing is uploaded anywhere. Translate and AI Assistant send only the extracted text you choose to process, never your original file, to a translation service or to the AI provider you supply your own key for.
+      <strong>Privacy, plainly:</strong> most document processing runs entirely in your browser — nothing is uploaded. AI and Translation send only the text you choose to process, never your original file, to the provider you pick or supply your own key for.
     </div>
   </div>
   <div class="app-footer">
@@ -509,7 +509,12 @@ body.dark .studio-tab.active{color:var(--pine);}
       <button class="studio-tab" data-studio="help"><span class="st-icon">❓</span> Help</button>
       <button class="studio-tab" data-studio="settings"><span class="st-icon">⚙️</span> Settings</button>
       <button class="studio-tab" data-studio="reader"><span class="st-icon">📖</span> Reader</button>
+      <button class="studio-tab" data-studio="export"><span class="st-icon">📤</span> Export</button>
       <button class="studio-tab" data-studio="about"><span class="st-icon">ℹ️</span> About</button>
+    </div>
+
+    <div id="noPdfBanner" style="display:none;background:var(--accent);color:var(--accent-ink);padding:8px 16px;font-size:12.5px;font-weight:600;text-align:center;">
+      📄 Most tools below need a PDF open first — tap <strong>Open / Merge PDFs</strong> in PDF Studio, or a Dashboard tile, to get started.
     </div>
 
     <div class="ribbon" id="ribbon">
@@ -521,7 +526,7 @@ body.dark .studio-tab.active{color:var(--pine);}
       <div class="ribbon-panel active" data-studio-panel="pdf">
 <div class="tool-group">
 <h2>Add pages</h2>
-<button class="tool-btn" id="btnOpen"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"></path></svg> Open / Merge PDFs</button>
+<button class="tool-btn" id="btnOpen"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"></path></svg> Open / Merge (PDF or photo)</button>
 <button class="tool-btn" disabled="" id="btnInsert"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 5v14m-7-7h14"></path></svg> Insert PDF at page…</button>
 </div>
 <div class="tool-group">
@@ -537,6 +542,7 @@ body.dark .studio-tab.active{color:var(--pine);}
 <h2>Extract &amp; split</h2>
 <button class="tool-btn" disabled="" id="btnExtract"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="16" x="4" y="4"></rect><path d="M9 12h6"></path></svg> Extract selected → new PDF</button>
 <button class="tool-btn" disabled="" id="btnSplit"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="1" width="7" x="3" y="4"></rect><rect height="16" rx="1" width="7" x="14" y="4"></rect></svg> Split into files…</button>
+<button class="tool-btn" id="btnPdfCompare"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="1" width="7" x="3" y="4"></rect><rect height="16" rx="1" width="7" x="14" y="4"></rect><path d="M12 4v16"></path></svg> Compare two PDFs…</button>
 </div>
 <div class="tool-group">
 <h2>Enhance</h2>
@@ -551,11 +557,12 @@ body.dark .studio-tab.active{color:var(--pine);}
       <div class="ribbon-panel" data-studio-panel="ocr">
 <div class="tool-group">
 <button class="tool-btn" id="btnOcrImage"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><path d="M8 20l4-4 4 4M9 10a2 2 0 100-4 2 2 0 000 4z"></path></svg> Extract text from image…</button>
-<button class="tool-btn" disabled="" id="btnOcrPdf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"></path><path d="M8 13h8M8 17h5"></path></svg> Make this PDF searchable…</button>
+<button class="tool-btn" disabled="" id="btnOcrPdf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z"></path><path d="M8 13h8M8 17h5"></path></svg> Create searchable PDF (OCR)…</button>
 <button class="tool-btn" id="btnImageTable"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="1" width="18" x="3" y="4"></rect><path d="M3 10h18M9 4v16M15 4v16"></path></svg> Extract table from image…</button>
 <button class="tool-btn" id="btnImagesToPdf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><circle cx="8.5" cy="9.5" r="1.5"></circle><path d="M21 15l-5-5-4 4-3-3-4 4"></path></svg> Combine images into PDF…</button>
 <button class="tool-btn" disabled="" id="btnPdfToImages"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><circle cx="8.5" cy="9.5" r="1.5"></circle><path d="M21 15l-5-5-4 4-3-3-4 4"></path></svg> PDF → Images…</button>
 <button class="tool-btn" id="btnQrReader"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="7" width="7" x="3" y="3"></rect><rect height="7" width="7" x="14" y="3"></rect><rect height="7" width="7" x="3" y="14"></rect><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"></path></svg> Read QR code…</button>
+<button class="tool-btn" id="btnQrGenerate"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="7" width="7" x="3" y="3"></rect><rect height="7" width="7" x="14" y="3"></rect><rect height="7" width="7" x="3" y="14"></rect><rect height="7" width="7" x="14" y="14"></rect></svg> Generate QR code…</button>
 </div>
 </div>
       <div class="ribbon-panel" data-studio-panel="translate">
@@ -600,12 +607,22 @@ body.dark .studio-tab.active{color:var(--pine);}
 </div>
       <div class="ribbon-panel" data-studio-panel="ai">
 <div class="tool-group">
-<button class="tool-btn" id="btnAiTools"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z"></path><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"></path></svg> AI text tools…</button>
+<h2>Quick tasks</h2>
+<button class="tool-btn" id="btnAiSummarize"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h13"></path></svg> Summarize</button>
+<button class="tool-btn" id="btnAiRewrite"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z"></path></svg> Rewrite</button>
+<button class="tool-btn" id="btnAiExplain"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9a2.5 2.5 0 015 0c0 1.5-2.5 2-2.5 3.5M12 17h.01"></path></svg> Explain</button>
+<button class="tool-btn" id="btnAiExtractTables"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="1" width="18" x="3" y="4"></rect><path d="M3 10h18M9 4v16"></path></svg> Extract tables</button>
+<button class="tool-btn" id="btnAiGenQuestions"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M9.5 9a2.5 2.5 0 015 0c0 1.5-2.5 2-2.5 3.5M12 17h.01"></path><circle cx="12" cy="12" r="9"></circle></svg> Generate questions</button>
+<button class="tool-btn" id="btnAiDraftEmail"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="20" x="2" y="4"></rect><path d="M2 7l10 6 10-6"></path></svg> Draft email</button>
 <button class="tool-btn" disabled id="btnChatPdf"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"></path></svg> Chat with this PDF…</button>
-<button class="tool-btn" id="btnVoiceToText"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"></path><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"></path></svg> Voice to text…</button>
-<button class="tool-btn" id="btnReadAloud"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19 12a4 4 0 00-2.5-3.7M22 12a7 7 0 00-4-6.3"></path></svg> Read aloud…</button>
+</div>
+<div class="tool-group">
+<h2>More &amp; document</h2>
+<button class="tool-btn" id="btnAiTools"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3z"></path><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"></path></svg> More AI tasks…</button>
 <button class="tool-btn" disabled="" id="btnAnalyze"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.35-4.35"></path></svg> Analyze document…</button>
 <button class="tool-btn" disabled="" id="btnDupPages"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="14" rx="1" width="12" x="3" y="6"></rect><rect height="14" rx="1" width="12" x="9" y="2"></rect></svg> Detect duplicate pages</button>
+<button class="tool-btn" id="btnVoiceToText"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"></path><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"></path></svg> Voice to text…</button>
+<button class="tool-btn" id="btnReadAloud"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19 12a4 4 0 00-2.5-3.7M22 12a7 7 0 00-4-6.3"></path></svg> Read aloud…</button>
 </div>
 </div>
       <div class="ribbon-panel" data-studio-panel="website">
@@ -632,6 +649,7 @@ body.dark .studio-tab.active{color:var(--pine);}
 <button class="tool-btn" disabled="" id="btnFillForm"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><path d="M7 9h10M7 13h6"></path></svg> Fill form fields…</button>
 <button class="tool-btn" disabled="" id="btnFlattenForm"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><path d="M7 14l3 3 7-8"></path></svg> Flatten form</button>
 <button class="tool-btn" disabled id="btnEncrypt"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 018 0v4"></path></svg> Set password <span class="beta-badge">BETA</span></button>
+<button class="tool-btn" disabled id="btnRedact"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><rect x="6" y="9" width="6" height="3" fill="currentColor" stroke="none"></rect><path d="M6 15h5"></path></svg> Redact page…</button>
 <p class="hint" style="padding:0 14px;margin:6px 0 0;">Password protection uses a community fork of the core PDF library, not the well-established one the rest of this app relies on — test that your protected file actually opens with the password before trusting it for anything sensitive. <strong>Not recommended for confidential or legally sensitive documents until more thoroughly validated.</strong> Cryptographic digital signatures still aren't supported; that genuinely requires a certificate authority.</p>
 </div>
 </div>
@@ -642,6 +660,21 @@ body.dark .studio-tab.active{color:var(--pine);}
 </div>
     </div>
 
+    <div id="exportStudio" style="display:none;max-width:640px;margin:0 auto;padding:28px 24px;">
+      <h2 style="font-family:var(--font-display);margin-bottom:6px;">Export</h2>
+      <p class="hint" style="margin:0 0 18px;">One-click access to every export format for the PDF currently open. Each tile jumps to its full tool if it needs more options.</p>
+      <div class="dashboard-grid">
+        <button class="dash-tile" id="exportPdfTile"><span class="dt-icon">📄</span><span>PDF</span></button>
+        <button class="dash-tile" data-tool="btnPdfToWord"><span class="dt-icon">📝</span><span>Word</span></button>
+        <button class="dash-tile" data-tool="btnPdfToExcel"><span class="dt-icon">📊</span><span>Excel</span></button>
+        <button class="dash-tile" data-tool="btnPdfToPptx"><span class="dt-icon">📽️</span><span>PowerPoint</span></button>
+        <button class="dash-tile" data-tool="btnPdfToHtml"><span class="dt-icon">🌐</span><span>HTML</span></button>
+        <button class="dash-tile" data-tool="btnPdfToEpub"><span class="dt-icon">📖</span><span>EPUB</span></button>
+        <button class="dash-tile" data-tool="btnPdfToImages"><span class="dt-icon">🖼️</span><span>Images</span></button>
+        <button class="dash-tile" id="exportAllZipTile"><span class="dt-icon">🗜️</span><span>Everything (.zip)</span></button>
+      </div>
+    </div>
+
     <div id="settingsStudio" class="studio-page">
       <h2>Settings</h2>
       <div class="tool-group">
@@ -650,6 +683,12 @@ body.dark .studio-tab.active{color:var(--pine);}
 <button class="tool-btn danger" id="btnClearAllData">Clear all local settings</button>
 </div>
 </div>
+      <h2 style="margin-top:22px;">History</h2>
+      <div class="tool-group" style="flex-direction:column; align-items:flex-start; gap:8px;">
+        <button class="tool-btn danger" id="btnClearAllRecentFilesSettings" style="width:auto;">Delete all recent files</button>
+        <button class="tool-btn danger" id="btnClearConversionsSettings" style="width:auto;">Delete conversion history</button>
+        <p class="hint" style="margin:0;">To remove a single recent file instead of everything, go to the Dashboard tab — each entry in "Recent files" has its own ✕ button.</p>
+      </div>
       <h2 style="margin-top:22px;">Accessibility</h2>
       <div class="tool-group" style="flex-direction:column; align-items:flex-start; gap:10px;">
         <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin:0;"><input type="checkbox" id="toggleHighContrast" style="width:auto;"> High contrast mode</label>
@@ -663,13 +702,13 @@ body.dark .studio-tab.active{color:var(--pine);}
         <button class="btn ghost" id="readerOpenBtn" type="button">Open PDF or EPUB…</button>
         <button class="btn ghost" id="readerUseCurrentBtn" type="button">Read current PDF</button>
         <span class="sep"></span>
-        <button class="icon-btn" id="readerPrev" disabled aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <button class="icon-btn" id="readerPrev" disabled aria-label="Previous" style="color:var(--ink); border-color:var(--line);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
         <span id="readerPageIndicator" class="mono" style="font-size:12px;color:var(--ink-soft);min-width:110px;text-align:center;">–</span>
-        <button class="icon-btn" id="readerNext" disabled aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+        <button class="icon-btn" id="readerNext" disabled aria-label="Next" style="color:var(--ink); border-color:var(--line);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
         <span class="sep"></span>
-        <button class="icon-btn" id="readerZoomOut" aria-label="Zoom out">−</button>
+        <button class="icon-btn" id="readerZoomOut" aria-label="Zoom out" style="color:var(--ink); border-color:var(--line);">−</button>
         <span id="readerZoomLevel" class="mono" style="font-size:12px;color:var(--ink-soft);min-width:44px;text-align:center;">100%</span>
-        <button class="icon-btn" id="readerZoomIn" aria-label="Zoom in">+</button>
+        <button class="icon-btn" id="readerZoomIn" aria-label="Zoom in" style="color:var(--ink); border-color:var(--line);">+</button>
         <span class="sep"></span>
         <select id="readerTheme"><option value="light">Light</option><option value="sepia">Sepia</option><option value="dark">Dark</option></select>
         <button class="btn ghost" id="readerToc" type="button" style="display:none;">Contents</button>
@@ -753,11 +792,17 @@ body.dark .studio-tab.active{color:var(--pine);}
       <div id="continueProjectArea" style="margin-bottom:18px;"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div>
-          <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);font-family:var(--font-mono);margin-bottom:8px;">Recent files</h3>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);font-family:var(--font-mono);margin:0;">Recent files</h3>
+            <button id="clearAllRecentFiles" type="button" style="background:none;border:none;color:var(--ink-soft);font-size:11px;cursor:pointer;text-decoration:underline;">Clear all</button>
+          </div>
           <div id="recentFilesList" style="display:flex;flex-direction:column;gap:6px;"></div>
         </div>
         <div>
-          <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);font-family:var(--font-mono);margin-bottom:8px;">Recent conversions</h3>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);font-family:var(--font-mono);margin:0;">Recent conversions</h3>
+            <button id="clearAllConversions" type="button" style="background:none;border:none;color:var(--ink-soft);font-size:11px;cursor:pointer;text-decoration:underline;">Clear all</button>
+          </div>
           <div id="recentConversionsList" style="display:flex;flex-direction:column;gap:6px;"></div>
         </div>
       </div>
@@ -782,8 +827,8 @@ body.dark .studio-tab.active{color:var(--pine);}
     </div>
 
     <div class="dropzone" id="dropzone">
-      <h2>Drop PDFs here, or click to choose files</h2>
-      <p>Select one file to start a project, or several to merge them in order.</p>
+      <h2>Drop PDFs or photos here, or click to choose files</h2>
+      <p>Select one file to start a project, or several to merge them in order. Photos (from your camera or library) become pages automatically.</p>
       <div class="stamp">FILES STAY ON THIS DEVICE</div>
     </div>
 
@@ -796,8 +841,8 @@ body.dark .studio-tab.active{color:var(--pine);}
   <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
 </div>
 
-<input type="file" id="fileInput" accept="application/pdf" multiple class="sr-only">
-<input type="file" id="insertInput" accept="application/pdf" class="sr-only">
+<input type="file" id="fileInput" accept="application/pdf,image/*" multiple class="sr-only">
+<input type="file" id="insertInput" accept="application/pdf,image/*" class="sr-only">
 
 <div class="modal-backdrop" id="genericModal">
   <div class="modal">
@@ -857,10 +902,11 @@ const LIB_URLS = {
   mammoth: 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
   chartjs: 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js',
   jsqr: 'https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.js',
+  qrcode: 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
 };
 const _libPromises = {};
 function loadLib(name){
-  if(window[{tesseract:'Tesseract', xlsx:'XLSX', mammoth:'mammoth', chartjs:'Chart', jsqr:'jsQR'}[name]]) return Promise.resolve();
+  if(window[{tesseract:'Tesseract', xlsx:'XLSX', mammoth:'mammoth', chartjs:'Chart', jsqr:'jsQR', qrcode:'QRCode'}[name]]) return Promise.resolve();
   if(_libPromises[name]) return _libPromises[name];
   _libPromises[name] = new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -943,6 +989,13 @@ async function deleteProjectSnapshot(id){
     tx.objectStore(STORE_PROJECTS).delete(id);
   } catch(e){}
 }
+async function clearAllProjectSnapshots(){
+  try{
+    const db = await openProjectsDb();
+    const tx = db.transaction(STORE_PROJECTS, 'readwrite');
+    tx.objectStore(STORE_PROJECTS).clear();
+  } catch(e){}
+}
 async function openRecentProject(id){
   const rec = await loadProjectSnapshot(id);
   if(!rec){ toast('That project is no longer available.', true); return; }
@@ -963,6 +1016,9 @@ function logConversion(action, filename){
 }
 function getConversionLog(){
   try{ return JSON.parse(localStorage.getItem('pdfworkbench-conversions') || '[]'); } catch(e){ return []; }
+}
+function clearConversionLog(){
+  try{ localStorage.removeItem('pdfworkbench-conversions'); } catch(e){}
 }
 
 /* ---------- State ---------- */
@@ -1016,7 +1072,7 @@ function fmtBytes(n){
 }
 function setToolsEnabled(on){
   ['btnInsert','btnDuplicateSel','btnRotateSel','btnReverse','btnDeleteSel','btnCrop','btnRemoveBlank','btnExtract','btnSplit',
-   'btnWatermark','btnPageNum','btnBates','btnHeaderFooter','btnFillForm','btnFlattenForm','btnSign','btnEncrypt',
+   'btnWatermark','btnPageNum','btnBates','btnHeaderFooter','btnFillForm','btnFlattenForm','btnSign','btnEncrypt','btnRedact',
    'btnCompress','btnMetadata','btnUndo','btnRedo','btnReset','btnOcrPdf',
    'btnPdfToWord','btnPdfToPptx','btnPdfToExcel','btnPdfToCsv','btnPdfToText','btnPdfToHtml','btnPdfToJson','btnPdfToImages',
    'btnPdfToXml','btnPdfToSvg','btnPdfToRtf','btnPdfToOdt','btnPdfToOds','btnPdfToOdp','btnPdfToEpub',
@@ -1027,6 +1083,7 @@ function setToolsEnabled(on){
   $('toolbar').style.display = on ? 'flex' : 'none';
   grid.classList.toggle('empty-hide', !on);
   $('dropzone').style.display = on ? 'none' : 'block';
+  $('noPdfBanner').style.display = on ? 'none' : 'block';
   updateDashboardTilesVisibility();
 }
 
@@ -1063,34 +1120,48 @@ function updateUndoRedoButtons(){
 
 /* ---------- Loading / merging files ---------- */
 async function loadFiles(fileList){
-  const files = Array.from(fileList).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
-  if(!files.length){ toast('Please choose PDF files.', true); return; }
+  const isPdfFile = f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+  const isImageFile = f => f.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i.test(f.name);
+  const allFiles = Array.from(fileList).filter(f => isPdfFile(f) || isImageFile(f));
+  if(!allFiles.length){ toast('Please choose PDF or image files.', true); return; }
   showProgress(5);
   try{
-    let doc;
-    let startIdx = 0;
+    let doc, startIdx = 0;
     if(!workingBytes){
-      const firstBuf = await files[0].arrayBuffer();
-      doc = await PDFDocument.load(firstBuf, { ignoreEncryption:true });
-      startIdx = 1;
-      $('outName').value = files[0].name.replace(/\.pdf$/i,'') || 'document';
+      $('outName').value = allFiles[0].name.replace(/\.[^.]+$/,'') || 'document';
       currentProjectId = 'proj_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+      if(isPdfFile(allFiles[0])){
+        const firstBuf = await allFiles[0].arrayBuffer();
+        doc = await PDFDocument.load(firstBuf, { ignoreEncryption:true });
+        startIdx = 1;
+      } else {
+        doc = await PDFDocument.create();
+      }
     } else {
       doc = await PDFDocument.load(workingBytes);
     }
-    for(let i = startIdx; i < files.length; i++){
-      showProgress(10 + Math.round(((i+1)/files.length)*70));
-      const buf = await files[i].arrayBuffer();
-      const src = await PDFDocument.load(buf, { ignoreEncryption:true });
-      const copied = await doc.copyPages(src, src.getPageIndices());
-      copied.forEach(p => doc.addPage(p));
+    const ptPerPx = 72 / 96;
+    for(let i = startIdx; i < allFiles.length; i++){
+      showProgress(10 + Math.round(((i+1)/allFiles.length)*70));
+      const f = allFiles[i];
+      if(isPdfFile(f)){
+        const buf = await f.arrayBuffer();
+        const src = await PDFDocument.load(buf, { ignoreEncryption:true });
+        const copied = await doc.copyPages(src, src.getPageIndices());
+        copied.forEach(p => doc.addPage(p));
+      } else {
+        const img = await loadImageEmbedBytes(doc, f);
+        const w = img.width * ptPerPx, h = img.height * ptPerPx;
+        const page = doc.addPage([w, h]);
+        page.drawImage(img, { x: 0, y: 0, width: w, height: h });
+      }
     }
     const bytes = await doc.save();
     setToolsEnabled(true);
-    await commit(bytes, `Loaded ${files.length} file${files.length>1?'s':''} (${doc.getPageCount()} pages total).`);
+    await commit(bytes, `Loaded ${allFiles.length} file${allFiles.length>1?'s':''} (${doc.getPageCount()} pages total).`);
   } catch(e){
     console.error(e);
-    toast('Could not open one of those PDFs — it may be corrupted or password protected.', true);
+    toast('Could not open one of those files — it may be corrupted, an unsupported format, or password protected.', true);
   } finally { showProgress(null); }
 }
 
@@ -1241,13 +1312,24 @@ async function insertPdfAt(file, position){
   showProgress(20);
   try{
     const doc = await PDFDocument.load(workingBytes);
-    const buf = await file.arrayBuffer();
-    const src = await PDFDocument.load(buf, { ignoreEncryption:true });
-    const copied = await doc.copyPages(src, src.getPageIndices());
-    copied.forEach((p, i) => doc.insertPage(Math.min(position + i, doc.getPageCount()), p));
-    const bytes = await doc.save();
-    await commit(bytes, `Inserted ${copied.length} pages at position ${position+1}.`);
-  } catch(e){ console.error(e); toast('Could not insert that PDF.', true); }
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if(isPdf){
+      const buf = await file.arrayBuffer();
+      const src = await PDFDocument.load(buf, { ignoreEncryption:true });
+      const copied = await doc.copyPages(src, src.getPageIndices());
+      copied.forEach((p, i) => doc.insertPage(Math.min(position + i, doc.getPageCount()), p));
+      const bytes = await doc.save();
+      await commit(bytes, `Inserted ${copied.length} pages at position ${position+1}.`);
+    } else {
+      const img = await loadImageEmbedBytes(doc, file);
+      const ptPerPx = 72 / 96;
+      const w = img.width * ptPerPx, h = img.height * ptPerPx;
+      const newPage = doc.insertPage(Math.min(position, doc.getPageCount()), [w, h]);
+      newPage.drawImage(img, { x: 0, y: 0, width: w, height: h });
+      const bytes = await doc.save();
+      await commit(bytes, `Inserted 1 page (from image) at position ${position+1}.`);
+    }
+  } catch(e){ console.error(e); toast('Could not insert that file.', true); }
   finally{ showProgress(null); }
 }
 
@@ -1625,6 +1707,78 @@ async function collectRowsFromPdfBytes(bytes){
     groupIntoLines(items).forEach(l => rows.push(lineToCells(l.items, 9)));
   }
   return rows;
+}
+
+/* ---------- PDF Compare ----------
+   Line-by-line diff (classic LCS/dynamic-programming approach) on each
+   PDF's extracted text — not a visual/pixel comparison, and not aware of
+   page boundaries once flattened into one line list, so a page insertion
+   partway through will shift everything after it in the diff. Good for
+   catching wording/content changes between two versions of a document. */
+async function getPdfFullTextLines(bytes){
+  const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+  const lines = [];
+  for(let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const items = content.items.filter(it => typeof it.str === 'string')
+      .map(it => ({ str: it.str, x: it.transform[4], y: it.transform[5], width: it.width || 0 }));
+    groupIntoLines(items).forEach(l => lines.push(lineToText(l)));
+  }
+  return lines;
+}
+function diffLines(linesA, linesB){
+  const n = linesA.length, m = linesB.length;
+  const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for(let i = n - 1; i >= 0; i--){
+    for(let j = m - 1; j >= 0; j--){
+      dp[i][j] = linesA[i] === linesB[j] ? dp[i+1][j+1] + 1 : Math.max(dp[i+1][j], dp[i][j+1]);
+    }
+  }
+  const result = [];
+  let i = 0, j = 0;
+  while(i < n && j < m){
+    if(linesA[i] === linesB[j]){ result.push({ type:'same', text: linesA[i] }); i++; j++; }
+    else if(dp[i+1][j] >= dp[i][j+1]){ result.push({ type:'removed', text: linesA[i] }); i++; }
+    else { result.push({ type:'added', text: linesB[j] }); j++; }
+  }
+  while(i < n){ result.push({ type:'removed', text: linesA[i] }); i++; }
+  while(j < m){ result.push({ type:'added', text: linesB[j] }); j++; }
+  return result;
+}
+function showCompareResult(diff, nameA, nameB){
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const added = diff.filter(d => d.type === 'added').length;
+  const removed = diff.filter(d => d.type === 'removed').length;
+  const rowsHtml = diff.map(d => {
+    const style = d.type === 'added' ? 'background:rgba(60,160,60,.15);'
+      : d.type === 'removed' ? 'background:rgba(200,60,60,.15);text-decoration:line-through;' : '';
+    const prefix = d.type === 'added' ? '+ ' : d.type === 'removed' ? '\u2212 ' : '  ';
+    return `<div style="${style}padding:2px 6px;font-family:var(--font-mono);font-size:11.5px;white-space:pre-wrap;">${prefix}${esc(d.text)}</div>`;
+  }).join('');
+  openModal('Comparison result', `
+    <div style="display:flex;gap:16px;font-size:12.5px;">
+      <span style="color:#2e8b2e;">+ ${added} added</span>
+      <span style="color:#b33;">\u2212 ${removed} removed</span>
+    </div>
+    <div style="max-height:400px;overflow-y:auto;border:1px solid var(--line);border-radius:4px;background:var(--bg);">${rowsHtml}</div>
+    <button class="btn ghost" id="cmpDownload" type="button" style="align-self:flex-start;">Download report (.html)</button>
+  `, async () => {});
+  $('modalConfirm').style.display = 'none';
+  $('modalCancel').textContent = 'Close';
+  setTimeout(() => {
+    document.getElementById('cmpDownload').addEventListener('click', () => {
+      const bodyHtml = diff.map(d => {
+        const cls = d.type === 'added' ? 'added' : d.type === 'removed' ? 'removed' : 'same';
+        const prefix = d.type === 'added' ? '+ ' : d.type === 'removed' ? '\u2212 ' : '  ';
+        return `<div class="${cls}">${prefix}${esc(d.text)}</div>`;
+      }).join('');
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Comparison: ${esc(nameA)} vs ${esc(nameB)}</title>
+<style>body{font-family:ui-monospace,monospace;font-size:13px;margin:24px;} .added{background:#d7f5d7;} .removed{background:#f8d7d7;text-decoration:line-through;}</style>
+</head><body><h2>${esc(nameA)} vs ${esc(nameB)}</h2>${bodyHtml}</body></html>`;
+      downloadBlob(new Blob([html], {type:'text/html'}), 'comparison.html');
+    });
+  }, 0);
 }
 
 /* ---------- Conversion: PDF → Word (.docx) ----------
@@ -2269,6 +2423,40 @@ async function signPdf({ dataUrl, pageIndex, position, widthPt }){
     else { x = pw/2 - w/2; y = ph/2 - h/2; }
     page.drawImage(img, { x, y, width: w, height: h });
   }, `Signature stamped on page ${pageIndex + 1}.`);
+}
+
+/* ---------- Redaction ----------
+   Real redaction, not a cosmetic black box: the target page is rendered
+   to an image, boxes are painted directly onto that image's pixels, and
+   the page's original vector content (text, shapes) is replaced
+   entirely by that flattened image. A box drawn merely on top of the
+   original PDF content — the common naive approach — leaves the
+   underlying text fully intact and copy-pasteable, which defeats the
+   point; this avoids that by not keeping the original content at all.
+   Tradeoff: the redacted page becomes a raster image, so its own text
+   is no longer selectable/searchable afterward. */
+async function redactPage(pageIndex, boxes, renderScale){
+  const pdf = await pdfjsLib.getDocument({ data: workingBytes.slice() }).promise;
+  const page = await pdf.getPage(pageIndex + 1);
+  const viewport = page.getViewport({ scale: renderScale });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(viewport.width));
+  canvas.height = Math.max(1, Math.round(viewport.height));
+  const ctx = canvas.getContext('2d');
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  ctx.fillStyle = '#000';
+  boxes.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
+  const pngBytes = await (await fetch(canvas.toDataURL('image/png'))).arrayBuffer();
+  await withDoc(async (doc) => {
+    const img = await doc.embedPng(pngBytes);
+    const pages = doc.getPages();
+    const orig = pages[pageIndex];
+    if(!orig) throw new Error('Page not found.');
+    const { width: pw, height: ph } = orig.getSize();
+    const newPage = doc.insertPage(pageIndex, [pw, ph]);
+    newPage.drawImage(img, { x: 0, y: 0, width: pw, height: ph });
+    doc.removePage(pageIndex + 1); // the original page, now shifted one index later
+  }, `Page ${pageIndex + 1} redacted — flattened to an image, original content permanently removed from that page.`);
 }
 
 /* ---------- Password protection (beta) ----------
@@ -2984,6 +3172,10 @@ const AI_OPS = {
   minutes: t => `Based on the following meeting notes or transcript, produce structured meeting minutes with sections for Attendees (if mentioned), Key Discussion Points, Decisions Made, and Action Items (with owners, if mentioned):\n\n${t}`,
   contract: t => `Review the following contract text and summarize: the parties involved, key obligations of each party, important dates/deadlines, termination conditions, and any unusual or risky clauses worth a closer look. This is a structural summary aid, not legal advice:\n\n${t}`,
   financial: t => `Analyze the following financial statement text and summarize the key figures (revenue, expenses, profit/loss, assets, liabilities where present), notable trends, and anything that stands out. This is a summary aid, not financial advice:\n\n${t}`,
+  explain: t => `Explain the following text in simple, plain language, as if to someone unfamiliar with the topic. Avoid jargon where possible, or define it when necessary:\n\n${t}`,
+  extractTables: t => `Extract any tabular data from the following text and present it as clean markdown tables. If there are multiple tables, separate them clearly with headers. If there's no tabular data, say so plainly:\n\n${t}`,
+  generateQuestions: t => `Generate 8-10 study or comprehension questions based on the following text, covering its key points. Number them:\n\n${t}`,
+  draftEmail: t => `Draft a professional email summarizing or referencing the key points of the following text. Suggest a subject line, keep the body concise and clear:\n\n${t}`,
 };
 async function callAI(provider, apiKey, model, prompt, maxTokens){
   maxTokens = maxTokens || 1200;
@@ -3071,6 +3263,7 @@ async function openReaderPdf(bytes, key){
   }
 }
 async function renderReaderPdfPage(){
+  $('readerNext').disabled = true; $('readerPrev').disabled = true;
   try{
     const page = await readerPdfDoc.getPage(readerPdfCurrentPage);
     const viewport = page.getViewport({ scale: readerPdfZoom });
@@ -3090,6 +3283,9 @@ async function renderReaderPdfPage(){
     console.error('Reader page render failed:', e);
     $('readerPdfView').innerHTML = `<p class="hint" style="color:var(--danger);">Could not render this page: ${(e && e.message) || 'unknown error'}.</p>`;
     toast('Could not render this page.', true);
+  } finally {
+    $('readerPrev').disabled = readerPdfCurrentPage <= 1;
+    $('readerNext').disabled = readerPdfCurrentPage >= readerPdfPageCount;
   }
 }
 
@@ -3223,9 +3419,9 @@ $('fileInput').addEventListener('change', (e) => { loadFiles(e.target.files); e.
 
 $('btnInsert').addEventListener('click', () => {
   openModal('Insert PDF at page…', `
-    <div class="field"><label>PDF file to insert</label><input type="file" id="insFile" accept="application/pdf"></div>
+    <div class="field"><label>PDF or image file to insert</label><input type="file" id="insFile" accept="application/pdf,image/*"></div>
     <div class="field"><label>Insert before page number</label><input type="number" id="insPos" min="1" value="1"></div>
-    <p class="hint">The inserted file's pages will appear starting at this position. Use a number one greater than the last page to append at the end.</p>
+    <p class="hint">The inserted file's pages (or the photo, as one page) will appear starting at this position. Use a number one greater than the last page to append at the end.</p>
   `, async () => {
     const f = document.getElementById('insFile').files[0];
     const pos = parseInt(document.getElementById('insPos').value) - 1;
@@ -3289,6 +3485,34 @@ $('btnSplit').addEventListener('click', () => {
       document.getElementById('rangesField').style.display = e.target.value === 'ranges' ? 'block' : 'none';
     }));
   }, 0);
+});
+
+$('btnPdfCompare').addEventListener('click', () => {
+  openModal('Compare two PDFs', `
+    <div class="field row">
+      <div><label>PDF A</label><input type="file" id="cmpFileA" accept=".pdf"></div>
+      <div><label>PDF B</label><input type="file" id="cmpFileB" accept=".pdf"></div>
+    </div>
+    <p class="hint">Compares extracted text line by line, not visually. Very large documents (thousands of distinct lines) may take a few seconds.</p>
+  `, async () => {
+    const fileA = document.getElementById('cmpFileA').files[0];
+    const fileB = document.getElementById('cmpFileB').files[0];
+    if(!fileA || !fileB){ toast('Choose both files.', true); return; }
+    setStatus('Comparing PDFs…'); showProgress(10);
+    try{
+      const bytesA = new Uint8Array(await fileA.arrayBuffer());
+      const bytesB = new Uint8Array(await fileB.arrayBuffer());
+      const linesA = await getPdfFullTextLines(bytesA);
+      const linesB = await getPdfFullTextLines(bytesB);
+      if(!linesA.length && !linesB.length){ toast('Neither PDF has extractable text — both look scanned. Run OCR first.', true); return; }
+      if(linesA.length > 3000 || linesB.length > 3000) toast('One of these PDFs is quite large — comparison may take a moment.', false);
+      showProgress(50);
+      const diff = diffLines(linesA, linesB);
+      showCompareResult(diff, fileA.name, fileB.name);
+      setStatus('Comparison complete.');
+    } catch(e){ console.error(e); toast('Could not compare those files.', true); }
+    finally { showProgress(null); }
+  });
 });
 
 $('btnWatermark').addEventListener('click', () => {
@@ -4063,6 +4287,83 @@ $('btnEncrypt').addEventListener('click', () => {
   });
 });
 
+$('btnRedact').addEventListener('click', () => {
+  openModal('Redact page', `
+    <div class="field row">
+      <div><label>Page number</label><input type="number" id="redactPageNum" min="1" value="1"></div>
+      <div style="display:flex;align-items:flex-end;"><button class="btn ghost" id="redactLoadPage" type="button">Load page</button></div>
+    </div>
+    <div class="dig-canvas-wrap" style="margin-top:4px;"><canvas id="redactCanvas"></canvas></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn ghost" id="redactUndo" type="button">Undo last box</button>
+      <button class="btn ghost" id="redactClear" type="button">Clear boxes</button>
+    </div>
+    <p class="hint">Draw one or more boxes over the areas to black out, then confirm. This is real redaction: the page is flattened to an image, so the covered content is permanently removed, not just hidden underneath — that page will no longer have selectable/searchable text.</p>
+  `, async () => {
+    const boxes = window.__redactBoxes || [];
+    const pageIndex = window.__redactPageIndex;
+    const scale = window.__redactScale;
+    if(pageIndex === undefined || !boxes.length){ toast('Load a page and draw at least one box first.', true); return; }
+    setStatus('Redacting page…'); showProgress(20);
+    try{
+      await redactPage(pageIndex, boxes, scale);
+    } catch(e){ console.error(e); toast('Could not redact that page: ' + e.message, true); }
+    finally { showProgress(null); }
+  });
+  setTimeout(() => {
+    let canvas, ctx, baseImage, drawing = false, startX = 0, startY = 0, boxes = [];
+    const scale = 1.5;
+    window.__redactScale = scale;
+    function redraw(){
+      ctx.putImageData(baseImage, 0, 0);
+      ctx.fillStyle = 'rgba(0,0,0,0.85)';
+      boxes.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
+    }
+    function toCanvasCoords(e){
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+      return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+    }
+    document.getElementById('redactLoadPage').addEventListener('click', async () => {
+      const pageNum = parseInt(document.getElementById('redactPageNum').value) || 1;
+      try{
+        const pdf = await pdfjsLib.getDocument({ data: workingBytes.slice() }).promise;
+        if(pageNum < 1 || pageNum > pdf.numPages){ toast('Page number out of range.', true); return; }
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale });
+        canvas = document.getElementById('redactCanvas');
+        canvas.width = viewport.width; canvas.height = viewport.height;
+        ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        baseImage = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        boxes = []; window.__redactBoxes = boxes; window.__redactPageIndex = pageNum - 1;
+        canvas.addEventListener('pointerdown', e => {
+          const p = toCanvasCoords(e);
+          startX = p.x; startY = p.y; drawing = true;
+          canvas.setPointerCapture(e.pointerId);
+        });
+        canvas.addEventListener('pointermove', e => {
+          if(!drawing) return;
+          const p = toCanvasCoords(e);
+          redraw();
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
+          ctx.fillRect(Math.min(startX,p.x), Math.min(startY,p.y), Math.abs(p.x-startX), Math.abs(p.y-startY));
+        });
+        canvas.addEventListener('pointerup', e => {
+          if(!drawing) return;
+          drawing = false;
+          const p = toCanvasCoords(e);
+          const box = { x: Math.min(startX,p.x), y: Math.min(startY,p.y), width: Math.abs(p.x-startX), height: Math.abs(p.y-startY) };
+          if(box.width > 4 && box.height > 4) boxes.push(box);
+          redraw();
+        });
+      } catch(e){ console.error(e); toast('Could not load that page.', true); }
+    });
+    document.getElementById('redactUndo').addEventListener('click', () => { if(ctx){ boxes.pop(); redraw(); } });
+    document.getElementById('redactClear').addEventListener('click', () => { if(ctx){ boxes = []; window.__redactBoxes = boxes; redraw(); } });
+  }, 0);
+});
+
 $('btnImagesToPdf').addEventListener('click', () => {
   openModal('Combine images into PDF', `
     <div class="field"><label>Images (added in the order selected)</label><input type="file" id="imgFiles" accept="image/*" multiple></div>
@@ -4229,6 +4530,60 @@ $('btnGenWebsite').addEventListener('click', () => {
     await generate();
   });
 });
+
+function openAiTaskModal(taskId, title, description, filenameSuffix){
+  const savedKey = localStorage.getItem('pdfworkbench-ai-key') || '';
+  const savedProvider = localStorage.getItem('pdfworkbench-ai-provider') || 'anthropic';
+  openModal(title, `
+    <p class="hint" style="margin:0;">${description} Uses your own AI API key, sent directly from your browser to the provider you choose.</p>
+    <div class="field row">
+      <div><label>Provider</label><select id="aiTaskProvider"><option value="anthropic" ${savedProvider==='anthropic'?'selected':''}>Anthropic (Claude)</option><option value="openai" ${savedProvider==='openai'?'selected':''}>OpenAI</option></select></div>
+      <div><label>API key</label><input type="password" id="aiTaskKey" value="${savedKey}" placeholder="sk-..."></div>
+    </div>
+    <div class="field"><label>Source text</label>
+      <select id="aiTaskSource">
+        <option value="pdf" ${workingBytes ? '' : 'disabled'}>This PDF's text</option>
+        <option value="paste">Paste text</option>
+      </select>
+    </div>
+    <div class="field" id="aiTaskPasteField" style="display:none;"><label>Text</label><textarea id="aiTaskPasteText" style="min-height:120px;"></textarea></div>
+  `, async () => {
+    const provider = document.getElementById('aiTaskProvider').value;
+    const apiKey = document.getElementById('aiTaskKey').value.trim();
+    const source = document.getElementById('aiTaskSource').value;
+    if(!apiKey){ toast('Enter your API key.', true); return; }
+    localStorage.setItem('pdfworkbench-ai-key', apiKey);
+    localStorage.setItem('pdfworkbench-ai-provider', provider);
+    let text = '';
+    if(source === 'pdf'){
+      const pages = await getPdfPagesTextItems();
+      text = pages.map(p => groupIntoLines(p.items).map(lineToText).join('\n')).join('\n\n');
+      if(!text.trim()){ toast('No extractable text — this PDF looks scanned. Run OCR first, then try again.', true); return; }
+    } else {
+      text = document.getElementById('aiTaskPasteText').value.trim();
+      if(!text){ toast('Paste some text first.', true); return; }
+    }
+    if(text.length > 15000) text = text.slice(0, 15000);
+    setStatus('Calling AI…'); showProgress(20);
+    try{
+      const result = await callAI(provider, apiKey, '', AI_OPS[taskId](text));
+      showTextResult(title, result, (filenameSuffix || taskId) + '.txt');
+      setStatus('Done.');
+    } catch(e){ console.error(e); toast('AI request failed: ' + e.message, true); }
+    finally { showProgress(null); }
+  });
+  setTimeout(() => {
+    document.getElementById('aiTaskSource').addEventListener('change', e => {
+      document.getElementById('aiTaskPasteField').style.display = e.target.value === 'paste' ? 'block' : 'none';
+    });
+  }, 0);
+}
+$('btnAiSummarize').addEventListener('click', () => openAiTaskModal('summarize', 'Summarize', 'Produces a concise summary.', 'summary'));
+$('btnAiRewrite').addEventListener('click', () => openAiTaskModal('rewrite', 'Rewrite', 'Improves clarity and flow while keeping the same meaning.', 'rewrite'));
+$('btnAiExplain').addEventListener('click', () => openAiTaskModal('explain', 'Explain', 'Explains the content in simple, plain language.', 'explanation'));
+$('btnAiExtractTables').addEventListener('click', () => openAiTaskModal('extractTables', 'Extract tables', 'Pulls tabular data out as clean markdown tables.', 'tables'));
+$('btnAiGenQuestions').addEventListener('click', () => openAiTaskModal('generateQuestions', 'Generate questions', 'Creates study/comprehension questions from the content.', 'questions'));
+$('btnAiDraftEmail').addEventListener('click', () => openAiTaskModal('draftEmail', 'Draft email', 'Drafts a professional email referencing the key points.', 'email_draft'));
 
 $('btnAiTools').addEventListener('click', () => {
   const savedKey = localStorage.getItem('pdfworkbench-ai-key') || '';
@@ -4475,6 +4830,37 @@ $('btnQrReader').addEventListener('click', () => {
   });
 });
 
+$('btnQrGenerate').addEventListener('click', () => {
+  openModal('Generate QR code', `
+    <div class="field"><label>Text or URL</label><textarea id="qrGenText" style="min-height:80px;" placeholder="https://example.com or any text"></textarea></div>
+    <button class="btn primary" id="qrGenBtn" type="button" style="align-self:flex-start;">Generate</button>
+    <div id="qrGenPreview" style="display:flex;justify-content:center;padding:16px;background:#fff;border-radius:4px;min-height:60px;"></div>
+    <button class="btn ghost" id="qrGenDownload" type="button" style="display:none;align-self:flex-start;">Download PNG</button>
+  `, async () => {});
+  $('modalConfirm').style.display = 'none';
+  $('modalCancel').textContent = 'Close';
+  setTimeout(() => {
+    document.getElementById('qrGenBtn').addEventListener('click', async () => {
+      const text = document.getElementById('qrGenText').value.trim();
+      if(!text){ toast('Enter some text or a URL first.', true); return; }
+      try{
+        await loadLib('qrcode');
+        const preview = document.getElementById('qrGenPreview');
+        preview.innerHTML = '';
+        new QRCode(preview, { text, width: 220, height: 220 });
+        document.getElementById('qrGenDownload').style.display = 'inline-flex';
+      } catch(e){ console.error(e); toast('Could not generate the QR code.', true); }
+    });
+    document.getElementById('qrGenDownload').addEventListener('click', () => {
+      const canvas = document.querySelector('#qrGenPreview canvas');
+      const img = document.querySelector('#qrGenPreview img');
+      if(canvas) downloadBlob(dataUrlToBlob(canvas.toDataURL('image/png')), 'qrcode.png');
+      else if(img) downloadBlob(dataUrlToBlob(img.src), 'qrcode.png');
+      else toast('Generate a QR code first.', true);
+    });
+  }, 0);
+});
+
 /* ---------- Reader controls ---------- */
 $('readerOpenBtn').addEventListener('click', () => {
   const input = document.createElement('input');
@@ -4496,10 +4882,12 @@ $('readerUseCurrentBtn').addEventListener('click', async () => {
   catch(e){ console.error(e); toast('Could not open the current PDF for reading.', true); }
 });
 $('readerPrev').addEventListener('click', () => {
+  if($('readerPrev').disabled) return;
   if(readerMode === 'pdf'){ if(readerPdfCurrentPage > 1){ readerPdfCurrentPage--; renderReaderPdfPage(); } }
   else if(readerMode === 'epub'){ if(readerEpubIndex > 0){ readerEpubIndex--; renderReaderEpubChapter(); } }
 });
 $('readerNext').addEventListener('click', () => {
+  if($('readerNext').disabled) return;
   if(readerMode === 'pdf'){ if(readerPdfCurrentPage < readerPdfPageCount){ readerPdfCurrentPage++; renderReaderPdfPage(); } }
   else if(readerMode === 'epub'){ if(readerEpubIndex < readerEpubChapters.length - 1){ readerEpubIndex++; renderReaderEpubChapter(); } }
 });
@@ -4680,6 +5068,28 @@ async function renderDashboardRecent(){
       </div>`).join('');
   }
 }
+$('clearAllRecentFiles').addEventListener('click', async () => {
+  if(!confirm('Clear all recent files from this device? This only removes them from the Recent Files list — it doesn\'t affect anything already downloaded.')) return;
+  await clearAllProjectSnapshots();
+  renderDashboardRecent();
+});
+$('clearAllConversions').addEventListener('click', () => {
+  if(!confirm('Clear the recent conversions log?')) return;
+  clearConversionLog();
+  renderDashboardRecent();
+});
+$('btnClearAllRecentFilesSettings').addEventListener('click', async () => {
+  if(!confirm('Delete all recent files from this device? This only removes them from the Recent Files list — it doesn\'t affect anything already downloaded.')) return;
+  await clearAllProjectSnapshots();
+  renderDashboardRecent();
+  toast('All recent files deleted.');
+});
+$('btnClearConversionsSettings').addEventListener('click', () => {
+  if(!confirm('Delete the conversion history log?')) return;
+  clearConversionLog();
+  renderDashboardRecent();
+  toast('Conversion history deleted.');
+});
 function setStudio(name){
   currentStudio = name;
   document.querySelectorAll('.studio-tab').forEach(t => t.classList.toggle('active', t.dataset.studio === name));
@@ -4688,7 +5098,8 @@ function setStudio(name){
   $('aboutStudio').classList.toggle('active', name === 'about');
   $('helpStudio').classList.toggle('active', name === 'help');
   $('readerStudio').classList.toggle('active', name === 'reader');
-  $('workspaceLayout').style.display = (name === 'settings' || name === 'about' || name === 'help' || name === 'reader') ? 'none' : 'flex';
+  $('exportStudio').style.display = name === 'export' ? 'block' : 'none';
+  $('workspaceLayout').style.display = (name === 'settings' || name === 'about' || name === 'help' || name === 'reader' || name === 'export') ? 'none' : 'flex';
   updateDashboardTilesVisibility();
 }
 document.querySelectorAll('.studio-tab').forEach(t => {
@@ -4710,6 +5121,55 @@ function launchTool(id){
 }
 document.querySelectorAll('.dash-tile').forEach(t => {
   t.addEventListener('click', () => launchTool(t.dataset.tool));
+});
+
+$('exportPdfTile').addEventListener('click', () => {
+  if(!workingBytes){ toast('Open a PDF first.', true); return; }
+  downloadBlob(new Blob([workingBytes], {type:'application/pdf'}), ($('outName').value || 'document') + '.pdf');
+  setStatus('Downloaded.');
+});
+$('exportAllZipTile').addEventListener('click', async () => {
+  if(!workingBytes){ toast('Open a PDF first.', true); return; }
+  setStatus('Exporting all formats…'); showProgress(10);
+  try{
+    const zip = new JSZip();
+    const base = $('outName').value || 'document';
+    zip.file(base + '.pdf', workingBytes);
+    const pages = await getPdfPagesTextItems();
+    const hasText = pages.some(p => p.items.some(it => it.str.trim().length));
+    if(hasText){
+      showProgress(25);
+      const pagesLines = pages.map(p => groupIntoLines(p.items).map(lineToText));
+      zip.file(base + '.docx', await buildDocxFromPages(pagesLines));
+      showProgress(40);
+      const { rows } = await collectPdfRows();
+      await loadLib('xlsx');
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+      zip.file(base + '.xlsx', XLSX.write(wb, { bookType:'xlsx', type:'array' }));
+      showProgress(55);
+      const slides = pages.map(p => {
+        const lines = groupIntoLines(p.items).map(lineToText).filter(l => l.trim().length);
+        return { title: lines[0] || `Page ${p.pageIndex+1}`, bullets: lines.slice(1) };
+      });
+      zip.file(base + '.pptx', await buildPptxFromSlides(slides));
+      showProgress(70);
+      zip.file(base + '.html', await buildPdfHtml());
+      showProgress(80);
+      zip.file(base + '.epub', await buildPdfEpub());
+    } else {
+      toast('No text layer — skipping Word/Excel/PowerPoint/HTML/EPUB (run OCR first for those). Including PDF and images only.', true);
+    }
+    showProgress(90);
+    const imgZipBlob = await convertPdfToImagesZip('png', 0.9);
+    zip.file(base + '_images.zip', await imgZipBlob.arrayBuffer());
+    const finalBlob = await zip.generateAsync({ type:'blob' });
+    downloadBlob(finalBlob, base + '_export_all.zip');
+    setStatus('Exported everything.');
+    logConversion('Exported all formats', base);
+  } catch(e){ console.error(e); toast('Could not export all formats.', true); }
+  finally { showProgress(null); }
 });
 
 /* ---------- Excel / CSV → Chart ---------- */
