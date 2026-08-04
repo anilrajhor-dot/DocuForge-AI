@@ -503,6 +503,7 @@ body.dark .studio-tab.active{color:var(--pine);}
       <button class="studio-tab" data-studio="ai"><span class="st-icon">🤖</span> AI Studio</button>
       <button class="studio-tab" data-studio="website"><span class="st-icon">🌐</span> Website Studio</button>
       <button class="studio-tab" data-studio="spreadsheet"><span class="st-icon">📊</span> Spreadsheet Studio</button>
+      <button class="studio-tab" data-studio="interest"><span class="st-icon">🏦</span> Interest Calculator</button>
       <button class="studio-tab" data-studio="security"><span class="st-icon">🔐</span> Security Studio</button>
       <button class="studio-tab" data-studio="batch"><span class="st-icon">📂</span> Batch Studio</button>
       <button class="studio-tab" data-studio="help"><span class="st-icon">❓</span> Help</button>
@@ -617,7 +618,12 @@ body.dark .studio-tab.active{color:var(--pine);}
 <div class="tool-group">
 <button class="tool-btn" id="btnExcelChart"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7"></path></svg> Excel / CSV → Chart…</button>
 <button class="tool-btn" id="btnChartDigitizer"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7"></path><circle cx="4" cy="10" r="1.5"></circle><circle cx="10" cy="4" r="1.5"></circle><circle cx="16" cy="13" r="1.5"></circle></svg> Digitize chart image…</button>
+</div>
+</div>
+      <div class="ribbon-panel" data-studio-panel="interest">
+<div class="tool-group">
 <button class="tool-btn" id="btnInterestCalc"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg> Bank interest calculator…</button>
+<p class="hint" style="padding:0 14px;margin:6px 0 0;">Calculates interest month by month, from the 1st through the last day of each calendar month inclusive, on the daily closing balance carried forward from your statement's transactions — the standard convention for savings-account interest.</p>
 </div>
 </div>
       <div class="ribbon-panel" data-studio-panel="security">
@@ -703,7 +709,10 @@ body.dark .studio-tab.active{color:var(--pine);}
       <p>Describe a site — name, tagline, sections, style — and get a complete, unique single-file HTML website back, live-previewed and ready to download. Uses the same AI key as AI Studio.</p>
 
       <h3 style="margin-top:18px;font-size:14px;">📊 Spreadsheet Tools</h3>
-      <p>Turn a spreadsheet into a chart, digitize numbers out of a chart <em>image</em> (manual calibration — no software can reliably read an arbitrary chart automatically), or calculate period-by-period interest from a bank statement.</p>
+      <p>Turn a spreadsheet into a chart, or digitize numbers out of a chart <em>image</em> (manual calibration — no software can reliably read an arbitrary chart automatically).</p>
+
+      <h3 style="margin-top:18px;font-size:14px;">🏦 Interest Calculator</h3>
+      <p>Upload a bank statement (PDF, Excel, or CSV), pick the date and balance columns, give it a rate — it calculates interest month by month, from the 1st through the last day of each calendar month inclusive, on the daily closing balance carried forward from your statement's transactions.</p>
 
       <h3 style="margin-top:18px;font-size:14px;">🔐 Security</h3>
       <p>Visual signature stamps, form fill &amp; flatten, and beta password protection (a less battle-tested library than the rest of the app — verify the output opens correctly). Cryptographic digital signatures aren't supported; that needs a certificate authority.</p>
@@ -4754,48 +4763,70 @@ function parseFlexibleAmount(str){
   const v = parseFloat(cleaned);
   return isNaN(v) ? null : (negative ? -v : v);
 }
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 function computeInterestFromStatement(rows, dateIdx, balanceIdx, annualRatePct){
   const entries = rows.map(r => ({ date: parseFlexibleDate(r[dateIdx]), balance: parseFlexibleAmount(r[balanceIdx]) }))
     .filter(e => e.date && e.balance !== null && !isNaN(e.date.getTime()));
   entries.sort((a, b) => a.date - b.date);
-  const breakdown = [];
-  let totalInterest = 0;
-  for(let i = 0; i < entries.length - 1; i++){
-    const days = Math.round((entries[i+1].date - entries[i].date) / 86400000);
-    if(days <= 0) continue;
-    const interest = entries[i].balance * (annualRatePct / 100) * days / 365;
-    totalInterest += interest;
-    breakdown.push({ from: entries[i].date, to: entries[i+1].date, days, balance: entries[i].balance, interest });
+  if(!entries.length) return { totalInterest: 0, monthly: [], entries };
+
+  // Balance in effect on any given calendar day: the most recent entry on/before
+  // that day, or the first entry's balance for any day before the statement starts.
+  function balanceOn(day){
+    let bal = entries[0].balance;
+    for(const e of entries){
+      if(e.date <= day) bal = e.balance;
+      else break;
+    }
+    return bal;
   }
-  return { totalInterest, breakdown, entries };
+
+  const first = entries[0].date, last = entries[entries.length - 1].date;
+  const monthly = [];
+  let totalInterest = 0;
+  let cursor = new Date(first.getFullYear(), first.getMonth(), 1);
+  const endMonth = new Date(last.getFullYear(), last.getMonth(), 1);
+
+  while(cursor <= endMonth){
+    const year = cursor.getFullYear(), month = cursor.getMonth();
+    const monthStart = new Date(year, month, 1);
+    const monthEnd = new Date(year, month + 1, 0); // last day of month, inclusive
+    let monthInterest = 0, days = 0;
+    for(let d = new Date(monthStart); d <= monthEnd; d.setDate(d.getDate() + 1)){
+      monthInterest += balanceOn(d) * (annualRatePct / 100) / 365;
+      days++;
+    }
+    monthly.push({ year, month, monthStart, monthEnd, days, interest: monthInterest, closingBalance: balanceOn(monthEnd) });
+    totalInterest += monthInterest;
+    cursor = new Date(year, month + 1, 1);
+  }
+  return { totalInterest, monthly, entries };
 }
 function showInterestResult(result, rate){
   const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-  const fmt = d => d.toLocaleDateString();
-  const rows = result.breakdown.map(b => [fmt(b.from), fmt(b.to), b.days, b.balance.toFixed(2), b.interest.toFixed(2)]);
-  const preview = rows.slice(0, 25).map(r => `<tr>${r.map(c => `<td style="padding:4px 6px;border:1px solid var(--line);font-size:11px;white-space:nowrap;">${esc(String(c))}</td>`).join('')}</tr>`).join('');
+  const rows = result.monthly.map(m => [`${MONTH_NAMES[m.month]} ${m.year}`, m.days, m.closingBalance.toFixed(2), m.interest.toFixed(2)]);
+  const preview = rows.map(r => `<tr>${r.map(c => `<td style="padding:4px 6px;border:1px solid var(--line);font-size:11.5px;white-space:nowrap;">${esc(String(c))}</td>`).join('')}</tr>`).join('');
   openModal('Interest calculation', `
     <div style="background:var(--surface-2);padding:12px;border-radius:4px;text-align:center;">
       <div style="font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;">Total interest @ ${rate}% p.a.</div>
       <div style="font-size:24px;font-weight:700;font-family:var(--font-mono);">${result.totalInterest.toFixed(2)}</div>
     </div>
-    <div style="overflow:auto;max-height:280px;border:1px solid var(--line);border-radius:4px;">
+    <div style="overflow:auto;max-height:300px;border:1px solid var(--line);border-radius:4px;">
       <table style="border-collapse:collapse;width:100%;">
-        <tr><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">From</th><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">To</th><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">Days</th><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">Balance</th><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">Interest</th></tr>
+        <tr><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">Month</th><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">Days</th><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">Closing balance</th><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">Interest</th></tr>
         ${preview}
       </table>
     </div>
-    ${rows.length > 25 ? `<p class="hint">Showing the first 25 of ${rows.length} periods — the full breakdown is in the export.</p>` : ''}
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn ghost" id="intCsv" type="button">Download breakdown as CSV</button>
       <button class="btn ghost" id="intXlsx" type="button">Download breakdown as Excel</button>
     </div>
-    <p class="hint">Simple interest per period (balance × rate × days ÷ 365) — matches how most savings accounts compute interest on the daily closing balance. Not a substitute for your bank's own statement.</p>
+    <p class="hint">Interest is calculated per calendar month, from the 1st through the last day of that month inclusive (e.g. a 31-day month counts all 31 days), on the daily closing balance carried forward from your statement's transactions. This is a calculation aid, not a substitute for your bank's own statement.</p>
   `, async () => {});
   $('modalConfirm').style.display = 'none';
   $('modalCancel').textContent = 'Close';
   setTimeout(() => {
-    const allRows = [['From','To','Days','Balance','Interest'], ...rows, ['','','','Total', result.totalInterest.toFixed(2)]];
+    const allRows = [['Month','Days','Closing balance','Interest'], ...rows, ['','','Total', result.totalInterest.toFixed(2)]];
     document.getElementById('intCsv').addEventListener('click', () => {
       downloadBlob(new Blob([allRows.map(r => r.map(toCsvValue).join(',')).join('\n')], {type:'text/csv'}), 'interest_breakdown.csv');
     });
@@ -4986,12 +5017,9 @@ function digCanvasClick(e){
   }
 }
 $('btnChartDigitizer').addEventListener('click', () => {
-  $('modalTitle').textContent = 'Chart digitizer';
-  $('modalConfirm').style.display = 'none';
-  $('modalCancel').textContent = 'Close';
   digImg = null; digCanvas = null; digCtx = null;
   digState = 'idle'; digCalPoints = []; digDataPoints = []; digPendingPixel = null;
-  $('modalBody').innerHTML = `
+  openModal('Chart digitizer', `
     <div class="field"><label>Chart image</label><input type="file" id="digImgFile" accept="image/*"></div>
     <div id="digArea" style="display:none;">
       <p class="hint" id="digInstructions" style="margin:0;">Step 1: click a point on the chart where the Y-axis value is known, then enter that value below.</p>
@@ -5013,24 +5041,31 @@ $('btnChartDigitizer').addEventListener('click', () => {
       </div>
     </div>
     <p class="hint">This is manual digitizing, not automatic chart reading. Two Y-axis reference clicks calibrate the scale; every point after that is computed from where you click.</p>
-  `;
-  $('genericModal').classList.add('show');
+  `, async () => {});
+  $('modalConfirm').style.display = 'none';
+  $('modalCancel').textContent = 'Close';
   setTimeout(() => {
-    document.getElementById('digImgFile').addEventListener('change', async (e) => {
+    const fileInput = document.getElementById('digImgFile');
+    if(!fileInput){ console.error('digImgFile input not found in DOM'); return; }
+    fileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if(!file) return;
       try{
         digImg = await loadImageFromBytes(new Uint8Array(await file.arrayBuffer()), file.type || 'image/png');
-      } catch(err){ console.error(err); toast('Could not load that image.', true); return; }
-      digCanvas = document.getElementById('digCanvas');
-      digCanvas.width = digImg.naturalWidth; digCanvas.height = digImg.naturalHeight;
-      digCtx = digCanvas.getContext('2d');
-      digState = 'cal_y1'; digCalPoints = []; digDataPoints = []; digPendingPixel = null;
-      document.getElementById('digArea').style.display = 'block';
-      document.getElementById('digInstructions').textContent = 'Step 1: click the FIRST Y-axis reference point on the chart, then enter its known value below.';
-      document.getElementById('digStartPoints').style.display = 'none';
-      digRedraw(); digRenderTable();
-      digCanvas.addEventListener('click', digCanvasClick);
+        if(!digImg.naturalWidth || !digImg.naturalHeight) throw new Error('That image has no visible size.');
+        digCanvas = document.getElementById('digCanvas');
+        digCanvas.width = digImg.naturalWidth; digCanvas.height = digImg.naturalHeight;
+        digCtx = digCanvas.getContext('2d');
+        digState = 'cal_y1'; digCalPoints = []; digDataPoints = []; digPendingPixel = null;
+        document.getElementById('digArea').style.display = 'block';
+        document.getElementById('digInstructions').textContent = 'Step 1: click the FIRST Y-axis reference point on the chart, then enter its known value below.';
+        document.getElementById('digStartPoints').style.display = 'none';
+        digRedraw(); digRenderTable();
+        digCanvas.addEventListener('click', digCanvasClick);
+      } catch(err){
+        console.error('Chart digitizer image load failed:', err);
+        toast('Could not load that image: ' + (err && err.message ? err.message : 'unknown error'), true);
+      }
     });
     document.getElementById('digConfirmCal').addEventListener('click', () => {
       if(!digPendingPixel){ toast('Click a point on the image first.', true); return; }
@@ -5088,7 +5123,7 @@ $('btnInterestCalc').addEventListener('click', () => {
     <div class="field"><label>Bank statement (PDF, Excel, or CSV)</label><input type="file" id="intFile" accept=".pdf,.xlsx,.xls,.csv"></div>
     <div id="intColumnsArea"></div>
     <div class="field"><label>Annual interest rate (%)</label><input type="number" id="intRate" step="0.01" value="4"></div>
-    <p class="hint">Calculates simple interest on the daily closing balance between transactions. Assumes the statement has a running balance column after each entry — most bank statements do.</p>
+    <p class="hint">Calculates interest month by month — from the 1st through the last day of each calendar month, inclusive — on the daily closing balance carried forward from your statement's transactions. Assumes the statement has a running balance column after each entry — most do.</p>
   `, async () => {
     const rows = window.__intRows;
     if(!rows){ toast('Choose a statement file first.', true); return; }
@@ -5098,7 +5133,7 @@ $('btnInterestCalc').addEventListener('click', () => {
     if(isNaN(rate)){ toast('Enter a valid interest rate.', true); return; }
     const body = rows.slice(1);
     const result = computeInterestFromStatement(body, dateIdx, balIdx, rate);
-    if(!result.breakdown.length){ toast('Could not compute — check the date/balance columns are right and there are at least 2 dated entries.', true); return; }
+    if(!result.monthly.length){ toast('Could not compute — check the date/balance columns are right and there\u2019s at least 1 dated entry.', true); return; }
     showInterestResult(result, rate);
   });
   setTimeout(() => {
@@ -5172,7 +5207,7 @@ const HELP_FAQ = [
   { q: ['crop'], a: 'PDF Studio → Arrange → "Crop pages…" — trims the visible area without deleting content, so it\u2019s reversible with Undo.' },
   { q: ['blank page'], a: 'PDF Studio → Arrange → "Remove blank pages…" checks actual page pixels, so it works on scanned blank pages too, not just text-empty ones.' },
   { q: ['bates'], a: 'PDF Studio → Enhance → "Bates numbering…" — a prefix plus sequential zero-padded numbers across every page.' },
-  { q: ['interest','bank statement'], a: 'Spreadsheet Studio → "Bank interest calculator…" reads a statement (PDF, Excel, or CSV) and calculates period-by-period interest from the daily closing balance and the rate you give it.' },
+  { q: ['interest','bank statement'], a: 'Interest Calculator (its own tab) reads a statement (PDF, Excel, or CSV) and calculates interest month by month, from the 1st through the last day of each calendar month inclusive, using the daily closing balance and the rate you give it.' },
   { q: ['digitize','chart image','extract chart'], a: 'Spreadsheet Studio → "Digitize chart image…" — calibrate two known axis points, then click each data point; no software can read an arbitrary chart automatically.' },
   { q: ['website','generate site'], a: 'Website Studio → "Generate a website…" — describe your site, get a complete single-file HTML site to preview, download, and deploy the same way as this app.' },
   { q: ['powerpoint','pptx','ppt','slide'], a: 'PowerPoint Studio: convert PDF ⇄ PowerPoint, edit slide titles/bullets directly, add or delete slides, merge several .pptx files, split one into parts, or drag to reorder slides. All structural — titles and bullets carry over, original design doesn\u2019t.' },
