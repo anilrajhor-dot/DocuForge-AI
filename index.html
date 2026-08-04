@@ -635,6 +635,7 @@ body.dark .studio-tab.active{color:var(--pine);}
 <div class="tool-group">
 <button class="tool-btn" id="btnExcelChart"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7"></path></svg> Excel / CSV → Chart…</button>
 <button class="tool-btn" id="btnChartDigitizer"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7"></path><circle cx="4" cy="10" r="1.5"></circle><circle cx="10" cy="4" r="1.5"></circle><circle cx="16" cy="13" r="1.5"></circle></svg> Digitize chart image…</button>
+<button class="tool-btn" id="btnMilestoneTracker"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg> Project milestone tracker…</button>
 </div>
 </div>
       <div class="ribbon-panel" data-studio-panel="interest">
@@ -5430,6 +5431,172 @@ $('btnExcelChart').addEventListener('click', () => {
           <div class="field"><label>Chart type</label><select id="chartType"><option value="bar">Bar</option><option value="line">Line</option><option value="pie">Pie</option></select></div>
         `;
       } catch(err){ console.error(err); toast('Could not read that spreadsheet.', true); }
+    });
+  }, 0);
+});
+
+/* ---------- Project milestone tracker ----------
+   Distinct from the general Excel/CSV chart tool: each point here is a
+   milestone with its own free-text note/reason (e.g. "delayed — vendor
+   approval pending"), not just a number. On touch devices a hover
+   tooltip alone doesn't work well (there's no hover), so tapping a point
+   also writes its full detail — including the note — into a persistent
+   panel below the chart that stays visible until you tap another point. */
+function milestoneRowBlock(m){
+  const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  const div = document.createElement('div');
+  div.className = 'milestone-row';
+  div.style.cssText = 'border:1px solid var(--line);border-radius:4px;padding:10px;background:var(--surface);';
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span class="mono" style="font-size:11px;color:var(--ink-soft);">Milestone</span>
+      <button class="ms-delete" type="button" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">Delete</button>
+    </div>
+    <div class="field row" style="margin-bottom:6px;">
+      <input type="text" class="ms-name" placeholder="Milestone name" value="${esc(m.name)}" style="padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);">
+      <input type="date" class="ms-date" value="${esc(m.date)}" style="padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);">
+      <input type="number" class="ms-value" placeholder="Value (e.g. % complete)" value="${m.value !== undefined && m.value !== '' ? m.value : ''}" style="padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);width:120px;">
+    </div>
+    <textarea class="ms-note" placeholder="Note / reason (e.g. delayed due to vendor approval)" style="width:100%;min-height:50px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);font-size:12.5px;">${esc(m.note)}</textarea>
+  `;
+  div.querySelector('.ms-delete').addEventListener('click', () => div.remove());
+  return div;
+}
+function showMilestoneChartResult(milestones, chartType){
+  const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const labels = milestones.map(m => m.name);
+  const data = milestones.map(m => m.value);
+  openModal('Project milestones', `
+    <div style="background:#fff;padding:12px;border-radius:4px;position:relative;height:300px;"><canvas id="milestoneCanvas"></canvas></div>
+    <p class="hint" style="margin:0;">Tap any point to see its date and note/reason below.</p>
+    <div id="milestoneDetail" style="display:none;font-size:12.5px;padding:10px;background:var(--surface-2);border-radius:4px;line-height:1.6;"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn ghost" id="msPng" type="button">Download chart as PNG</button>
+      <button class="btn ghost" id="msCsv" type="button">Download milestones as CSV</button>
+      <button class="btn ghost" id="msXlsx" type="button">Download milestones as Excel</button>
+    </div>
+  `, async () => {});
+  $('modalConfirm').style.display = 'none';
+  $('modalCancel').textContent = 'Close';
+  setTimeout(async () => {
+    try{
+      await loadLib('chartjs');
+      if(Chart.registerables){ try{ Chart.register(...Chart.registerables); } catch(e){} }
+      const canvasEl = document.getElementById('milestoneCanvas');
+      const existing = Chart.getChart ? Chart.getChart(canvasEl) : null;
+      if(existing) existing.destroy();
+      const ctx = canvasEl.getContext('2d');
+      new Chart(ctx, {
+        type: chartType,
+        data: { labels, datasets: [{
+          label: 'Progress', data,
+          backgroundColor: '#B65C1F', borderColor: '#113B34',
+          borderWidth: chartType === 'line' ? 2 : 1, tension: 0.2,
+          pointRadius: 5, pointHoverRadius: 7,
+        }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              enabled: true,
+              callbacks: {
+                label: (item) => {
+                  const m = milestones[item.dataIndex];
+                  const lines = [`Value: ${item.formattedValue}`];
+                  if(m.date) lines.push(`Date: ${m.date}`);
+                  if(m.note) lines.push(`Note: ${m.note}`);
+                  return lines;
+                },
+              },
+            },
+          },
+          interaction: { mode: 'nearest', intersect: true },
+          onClick: (evt, elements) => {
+            const detail = document.getElementById('milestoneDetail');
+            if(!elements.length) return;
+            const m = milestones[elements[0].index];
+            detail.style.display = 'block';
+            detail.innerHTML = `<strong>${esc(m.name)}</strong>${m.date ? ' — ' + esc(m.date) : ''}<br>Value: ${m.value}<br>${m.note ? 'Reason/note: ' + esc(m.note) : '<em>No note added for this milestone.</em>'}`;
+          },
+        },
+      });
+    } catch(e){ console.error(e); toast('Could not render the chart: ' + (e && e.message ? e.message : 'unknown error'), true); }
+    document.getElementById('msPng').addEventListener('click', () => {
+      downloadBlob(dataUrlToBlob(document.getElementById('milestoneCanvas').toDataURL('image/png')), 'milestones.png');
+    });
+    document.getElementById('msCsv').addEventListener('click', () => {
+      const rows = [['Name','Date','Value','Note'], ...milestones.map(m => [m.name, m.date, m.value, m.note])];
+      downloadBlob(new Blob([rows.map(r => r.map(toCsvValue).join(',')).join('\n')], {type:'text/csv'}), 'milestones.csv');
+    });
+    document.getElementById('msXlsx').addEventListener('click', async () => {
+      await loadLib('xlsx');
+      const rows = [['Name','Date','Value','Note'], ...milestones.map(m => [m.name, m.date, m.value, m.note])];
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Milestones');
+      downloadBlob(new Blob([XLSX.write(wb, { bookType:'xlsx', type:'array' })], {type:'application/octet-stream'}), 'milestones.xlsx');
+    });
+  }, 0);
+}
+$('btnMilestoneTracker').addEventListener('click', () => {
+  openModal('Project milestone tracker', `
+    <div class="field"><label>Import from file (optional — CSV/Excel with Name, Date, Value, Note columns)</label><input type="file" id="milestoneImportFile" accept=".xlsx,.xls,.csv"></div>
+    <div id="milestoneRows" style="display:flex;flex-direction:column;gap:10px;max-height:320px;overflow-y:auto;"></div>
+    <button class="btn ghost" id="milestoneAddRow" type="button" style="align-self:flex-start;">+ Add milestone</button>
+    <div class="field"><label>Chart type</label><select id="milestoneChartType"><option value="line">Line (progress over time)</option><option value="bar">Bar</option></select></div>
+    <p class="hint">Each milestone can carry a note explaining the reason behind its value — e.g. why progress slowed. Tap the point in the chart afterward to see it.</p>
+  `, async () => {
+    const container = document.getElementById('milestoneRows');
+    const rows = Array.from(container.children);
+    if(!rows.length){ toast('Add at least one milestone.', true); return; }
+    const milestones = rows.map(div => ({
+      name: div.querySelector('.ms-name').value || 'Untitled',
+      date: div.querySelector('.ms-date').value || '',
+      value: parseFloat(div.querySelector('.ms-value').value) || 0,
+      note: div.querySelector('.ms-note').value || '',
+    }));
+    milestones.sort((a,b) => (a.date || '').localeCompare(b.date || ''));
+    const chartType = document.getElementById('milestoneChartType').value;
+    showMilestoneChartResult(milestones, chartType);
+  });
+  setTimeout(() => {
+    const container = document.getElementById('milestoneRows');
+    container.appendChild(milestoneRowBlock({ name:'', date:'', value:'', note:'' }));
+    document.getElementById('milestoneAddRow').addEventListener('click', () => {
+      container.appendChild(milestoneRowBlock({ name:'', date:'', value:'', note:'' }));
+    });
+    document.getElementById('milestoneImportFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      try{
+        await loadLib('xlsx');
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type:'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { defval:'' });
+        if(!json.length){ toast('No data found in that file.', true); return; }
+        container.innerHTML = '';
+        json.forEach(row => {
+          const keys = Object.keys(row);
+          const findKey = (patterns) => keys.find(k => patterns.some(p => k.toLowerCase().includes(p)));
+          const nameKey = findKey(['name','milestone','task']);
+          const dateKey = findKey(['date']);
+          const valueKey = findKey(['value','progress','percent','%']);
+          const noteKey = findKey(['note','reason','remark','comment']);
+          let dateVal = '';
+          if(dateKey){
+            const parsed = parseFlexibleDate(row[dateKey]);
+            if(parsed && !isNaN(parsed.getTime())) dateVal = parsed.toISOString().slice(0,10);
+          }
+          container.appendChild(milestoneRowBlock({
+            name: nameKey ? String(row[nameKey]) : '',
+            date: dateVal,
+            value: valueKey ? row[valueKey] : '',
+            note: noteKey ? String(row[noteKey]) : '',
+          }));
+        });
+      } catch(err){ console.error(err); toast('Could not read that file.', true); }
     });
   }, 0);
 });
