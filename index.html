@@ -105,6 +105,7 @@ header .tag{font-size:11px; color:#C7D6CF; font-family:var(--font-mono);}
   width:32px; height:32px; border-radius:var(--radius); cursor:pointer;
   display:flex; align-items:center; justify-content:center;
 }
+.icon-btn svg{width:18px; height:18px; flex-shrink:0;}
 .icon-btn:hover{background:rgba(244,242,234,.12);}
 
 /* Layout */
@@ -1710,8 +1711,10 @@ async function collectPdfRows(){
   });
   return { rows, hasText };
 }
-async function collectRowsFromPdfBytes(bytes){
-  const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+async function collectRowsFromPdfBytes(bytes, password){
+  const opts = { data: bytes.slice() };
+  if(password) opts.password = password;
+  const pdf = await pdfjsLib.getDocument(opts).promise;
   const rows = [];
   for(let i = 1; i <= pdf.numPages; i++){
     const page = await pdf.getPage(i);
@@ -5913,13 +5916,20 @@ $('btnChartDigitizer').addEventListener('click', () => {
 
 $('btnInterestCalc').addEventListener('click', () => {
   openModal('Bank interest calculator', `
-    <div class="field"><label>Bank statement (PDF, Excel, or CSV)</label><input type="file" id="intFile" accept=".pdf,.xlsx,.xls,.csv"></div>
+    <div class="field"><label>Source</label>
+      <select id="intSource">
+        <option value="upload">Upload a file</option>
+        <option value="current" ${workingBytes ? '' : 'disabled'}>${workingBytes ? 'Use the PDF currently open in the editor' : 'Use the PDF currently open (none loaded)'}</option>
+      </select>
+    </div>
+    <div class="field" id="intUploadField"><label>Bank statement (PDF, Excel, or CSV)</label><input type="file" id="intFile" accept=".pdf,.xlsx,.xls,.csv"></div>
+    <div class="field" id="intPasswordField" style="display:none;"><label>PDF password</label><input type="password" id="intPassword"></div>
     <div id="intColumnsArea"></div>
     <div class="field"><label>Annual interest rate (%)</label><input type="number" id="intRate" step="0.01" value="4"></div>
     <p class="hint">Calculates interest month by month — from the 1st through the last day of each calendar month, inclusive — on the daily closing balance carried forward from your statement's transactions. Assumes the statement has a running balance column after each entry — most do.</p>
   `, async () => {
     const rows = window.__intRows;
-    if(!rows){ toast('Choose a statement file first.', true); return; }
+    if(!rows){ toast('Choose a statement first.', true); return; }
     const dateIdx = parseInt(document.getElementById('intDateCol').value);
     const balIdx = parseInt(document.getElementById('intBalCol').value);
     const rate = parseFloat(document.getElementById('intRate').value);
@@ -5930,34 +5940,76 @@ $('btnInterestCalc').addEventListener('click', () => {
     showInterestResult(result, rate);
   });
   setTimeout(() => {
+    async function loadStatementRows(buf, ext, password){
+      let rows;
+      if(ext === 'pdf'){
+        rows = await collectRowsFromPdfBytes(buf, password);
+      } else {
+        await loadLib('xlsx');
+        const wb = XLSX.read(buf, { type:'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:false, defval:'' });
+      }
+      return rows;
+    }
+    function populateColumnPickers(rows){
+      window.__intRows = rows;
+      const headers = rows[0];
+      document.getElementById('intColumnsArea').innerHTML = `
+        <div class="field row">
+          <div><label>Date column</label><select id="intDateCol">${headers.map((h,i) => `<option value="${i}">${escapeXml(String(h))}</option>`).join('')}</select></div>
+          <div><label>Balance column</label><select id="intBalCol">${headers.map((h,i) => `<option value="${i}" ${i === headers.length-1 ? 'selected' : ''}>${escapeXml(String(h))}</option>`).join('')}</select></div>
+        </div>
+      `;
+    }
+    document.getElementById('intSource').addEventListener('change', async (e) => {
+      document.getElementById('intUploadField').style.display = e.target.value === 'upload' ? 'block' : 'none';
+      document.getElementById('intPasswordField').style.display = 'none';
+      if(e.target.value === 'current'){
+        if(!workingBytes){ toast('No PDF is currently open.', true); return; }
+        setStatus('Reading current PDF…'); showProgress(20);
+        try{
+          const rows = await collectRowsFromPdfBytes(workingBytes);
+          if(!rows.length){ toast('Could not read any data from the current PDF.', true); return; }
+          populateColumnPickers(rows);
+        } catch(err){ console.error(err); toast('Could not read the current PDF.', true); }
+        finally { showProgress(null); setStatus('Ready.'); }
+      }
+    });
     document.getElementById('intFile').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if(!file) return;
       setStatus('Reading statement…'); showProgress(20);
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
       try{
-        let rows;
-        const ext = (file.name.split('.').pop() || '').toLowerCase();
-        if(ext === 'pdf'){
-          const buf = new Uint8Array(await file.arrayBuffer());
-          rows = await collectRowsFromPdfBytes(buf);
-        } else {
-          await loadLib('xlsx');
-          const buf = await file.arrayBuffer();
-          const wb = XLSX.read(buf, { type:'array' });
-          const ws = wb.Sheets[wb.SheetNames[0]];
-          rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:false, defval:'' });
-        }
+        const buf = ext === 'pdf' ? new Uint8Array(await file.arrayBuffer()) : await file.arrayBuffer();
+        const rows = await loadStatementRows(buf, ext, null);
         if(!rows.length){ toast('Could not read any data from that file.', true); return; }
-        window.__intRows = rows;
-        const headers = rows[0];
-        document.getElementById('intColumnsArea').innerHTML = `
-          <div class="field row">
-            <div><label>Date column</label><select id="intDateCol">${headers.map((h,i) => `<option value="${i}">${escapeXml(String(h))}</option>`).join('')}</select></div>
-            <div><label>Balance column</label><select id="intBalCol">${headers.map((h,i) => `<option value="${i}" ${i === headers.length-1 ? 'selected' : ''}>${escapeXml(String(h))}</option>`).join('')}</select></div>
-          </div>
-        `;
-      } catch(err){ console.error(err); toast('Could not read that file.', true); }
-      finally { showProgress(null); setStatus('Ready.'); }
+        document.getElementById('intPasswordField').style.display = 'none';
+        populateColumnPickers(rows);
+      } catch(err){
+        if(ext === 'pdf' && err && err.name === 'PasswordException'){
+          document.getElementById('intPasswordField').style.display = 'block';
+          toast('This PDF needs a password — enter it below, then reselect the file.', true);
+          document.getElementById('intPassword').addEventListener('change', async () => {
+            const password = document.getElementById('intPassword').value;
+            if(!password) return;
+            setStatus('Reading statement…'); showProgress(20);
+            try{
+              const buf = new Uint8Array(await file.arrayBuffer());
+              const rows = await collectRowsFromPdfBytes(buf, password);
+              if(!rows.length){ toast('Could not read any data from that file.', true); return; }
+              populateColumnPickers(rows);
+              toast('Statement unlocked and read.');
+            } catch(err2){
+              console.error(err2);
+              toast(err2 && err2.name === 'PasswordException' ? 'Incorrect password.' : 'Could not read that file.', true);
+            } finally { showProgress(null); setStatus('Ready.'); }
+          }, { once: true });
+        } else {
+          console.error(err); toast('Could not read that file.', true);
+        }
+      } finally { showProgress(null); setStatus('Ready.'); }
     });
   }, 0);
 });
