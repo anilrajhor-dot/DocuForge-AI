@@ -32,6 +32,7 @@
   --accent:#B65C1F;
   --accent-ink:#FFFFFF;
   --pine:#113B34;
+  --pine-solid:#113B34;
   --pine-soft:#1B4F45;
   --danger:#A3341E;
   --focus:#1B4F45;
@@ -88,7 +89,7 @@ h1,h2,h3{font-family:var(--font-display); margin:0; font-weight:600;}
 /* Header */
 header{
   display:flex; align-items:center; gap:14px; padding:12px 20px;
-  background:var(--pine); color:#F4F2EA; position:sticky; top:0; z-index:40;
+  background:var(--pine-solid); color:#F4F2EA; position:sticky; top:0; z-index:40;
   box-shadow:var(--shadow);
 }
 header .brand{display:flex; align-items:baseline; gap:10px;}
@@ -236,7 +237,7 @@ body.dark .dropzone .stamp{color:var(--pine);}
 
 .toast-wrap{position:fixed; top:70px; right:20px; display:flex; flex-direction:column; gap:8px; z-index:200;}
 .toast{
-  background:var(--pine); color:#F4F2EA; padding:10px 14px; border-radius:4px; font-size:13px; box-shadow:var(--shadow);
+  background:var(--pine-solid); color:#F4F2EA; padding:10px 14px; border-radius:4px; font-size:13px; box-shadow:var(--shadow);
   max-width:320px; animation:slidein .15s ease-out;
 }
 .toast.err{background:var(--danger);}
@@ -254,7 +255,7 @@ body.dark .dropzone .stamp{color:var(--pine);}
 #landingPage{min-height:100vh; display:flex; flex-direction:column; background:var(--bg);}
 .landing-hero{
   flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  text-align:center; padding:60px 20px 40px; background:linear-gradient(180deg, var(--pine) 0%, var(--pine) 40%, var(--bg) 40%);
+  text-align:center; padding:60px 20px 40px; background:linear-gradient(180deg, var(--pine-solid) 0%, var(--pine-solid) 40%, var(--bg) 40%);
 }
 .landing-logo{width:76px; height:76px; margin-bottom:18px;}
 .landing-hero h1{font-size:34px; color:#F4F2EA; margin-bottom:8px;}
@@ -338,6 +339,37 @@ body.dark .studio-tab.active{color:var(--pine);}
 .dig-canvas-wrap canvas{display:block; cursor:crosshair;}
 #digTable{width:100%; border-collapse:collapse; font-size:12px;}
 
+/* ===== Floating help widget ===== */
+#floatingHelpBtn{
+  position:fixed; bottom:20px; right:20px; width:52px; height:52px; border-radius:50%;
+  background:var(--pine-solid); color:#fff; border:none; box-shadow:var(--shadow); font-size:22px;
+  font-weight:700; cursor:pointer; z-index:70; font-family:var(--font-display);
+}
+#floatingHelpBtn:hover{filter:brightness(1.1);}
+#floatingHelpPanel{
+  display:none; flex-direction:column; position:fixed; bottom:82px; right:20px; width:320px; max-width:calc(100vw - 32px);
+  max-height:min(70vh,480px); background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  box-shadow:var(--shadow); z-index:70; overflow:hidden;
+}
+#floatingHelpPanel.show{display:flex;}
+.fh-head{
+  display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:var(--pine-solid);
+  color:#fff; font-weight:600; font-size:13px; flex-shrink:0;
+}
+.fh-head button{background:none; border:none; color:#fff; cursor:pointer; font-size:15px; padding:2px;}
+#floatingHelpMessages{flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px; min-height:160px;}
+.fh-msg{padding:8px 10px; border-radius:8px; font-size:12.5px; line-height:1.5; max-width:88%; white-space:pre-wrap;}
+.fh-msg.user{align-self:flex-end; background:var(--pine-solid); color:#fff;}
+.fh-msg.bot{align-self:flex-start; background:var(--surface-2); color:var(--ink); border:1px solid var(--line);}
+.fh-inputrow{display:flex; gap:6px; padding:10px; border-top:1px solid var(--line); flex-shrink:0;}
+.fh-inputrow input{
+  flex:1; min-width:0; padding:7px 9px; border:1px solid var(--line); border-radius:4px; background:var(--bg); color:var(--ink); font-size:12.5px;
+}
+.fh-inputrow button{
+  flex-shrink:0; border:1px solid var(--line); background:var(--surface); border-radius:4px; padding:6px 10px; cursor:pointer; font-size:12.5px; color:var(--ink);
+}
+.fh-inputrow button:hover{border-color:var(--pine);}
+
 /* ===== Reader ===== */
 .reader-page{display:none; flex-direction:column; height:calc(100vh - 57px);}
 .reader-page.active{display:flex;}
@@ -389,7 +421,7 @@ body.dark .studio-tab.active{color:var(--pine);}
 .recent-empty{color:var(--ink-soft); font-size:12.5px; padding:8px 0;}
 .continue-banner{
   display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 18px;
-  background:var(--pine); color:#F4F2EA; border-radius:6px; box-shadow:var(--shadow);
+  background:var(--pine-solid); color:#F4F2EA; border-radius:6px; box-shadow:var(--shadow);
 }
 .continue-banner button{
   background:var(--accent); color:var(--accent-ink); border:none; padding:8px 16px; border-radius:4px;
@@ -462,6 +494,7 @@ body.dark .studio-tab.active{color:var(--pine);}
       <button class="studio-tab" data-studio="spreadsheet"><span class="st-icon">📊</span> Spreadsheet Studio</button>
       <button class="studio-tab" data-studio="security"><span class="st-icon">🔐</span> Security Studio</button>
       <button class="studio-tab" data-studio="batch"><span class="st-icon">📂</span> Batch Studio</button>
+      <button class="studio-tab" data-studio="help"><span class="st-icon">❓</span> Help</button>
       <button class="studio-tab" data-studio="settings"><span class="st-icon">⚙️</span> Settings</button>
       <button class="studio-tab" data-studio="reader"><span class="st-icon">📖</span> Reader</button>
       <button class="studio-tab" data-studio="about"><span class="st-icon">ℹ️</span> About</button>
@@ -486,6 +519,7 @@ body.dark .studio-tab.active{color:var(--pine);}
 <button class="tool-btn" disabled="" id="btnReverse"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M7 7h13M7 12h13M7 17h13M3 7v10l3-3M3 7l3 3"></path></svg> Reverse page order</button>
 <button class="tool-btn danger" disabled="" id="btnDeleteSel"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg> Delete selected</button>
 <button class="tool-btn" disabled="" id="btnCrop"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M6 2v14a2 2 0 002 2h14M18 22V8a2 2 0 00-2-2H2"></path></svg> Crop pages…</button>
+<button class="tool-btn" disabled id="btnRemoveBlank"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M9 21v-4a2 2 0 012-2h2a2 2 0 012 2v4"></path></svg> Remove blank pages…</button>
 </div>
 <div class="tool-group">
 <h2>Extract &amp; split</h2>
@@ -496,9 +530,10 @@ body.dark .studio-tab.active{color:var(--pine);}
 <h2>Enhance</h2>
 <button class="tool-btn" disabled="" id="btnWatermark"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 4h16v16H4z"></path><path d="M8 16l8-8"></path></svg> Add watermark…</button>
 <button class="tool-btn" disabled="" id="btnPageNum"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="16" x="4" y="4"></rect><text fill="currentColor" font-size="8" stroke="none" text-anchor="middle" x="12" y="16">12</text></svg> Add page numbers…</button>
+<button class="tool-btn" disabled id="btnBates"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="16" rx="2" width="16" x="4" y="4"></rect><path d="M7 16h10"></path><text fill="currentColor" font-size="6" stroke="none" text-anchor="middle" x="12" y="12">A-001</text></svg> Bates numbering…</button>
 <button class="tool-btn" disabled="" id="btnHeaderFooter"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="18" rx="2" width="18" x="3" y="3"></rect><path d="M3 7h18M3 17h18"></path></svg> Add header/footer…</button>
 <button class="tool-btn" disabled="" id="btnCompress"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M8 4v4H4M16 4v4h4M8 20v-4H4M16 20v-4h4"></path></svg> Compress</button>
-<button class="tool-btn" disabled="" id="btnMetadata"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"></path></svg> Edit metadata…</button>
+<button class="tool-btn" disabled="" id="btnMetadata"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"></path></svg> Metadata inspector…</button>
 </div>
 </div>
       <div class="ribbon-panel" data-studio-panel="ocr">
@@ -551,6 +586,7 @@ body.dark .studio-tab.active{color:var(--pine);}
 <div class="tool-group">
 <button class="tool-btn" id="btnExcelChart"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7"></path></svg> Excel / CSV → Chart…</button>
 <button class="tool-btn" id="btnChartDigitizer"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7"></path><circle cx="4" cy="10" r="1.5"></circle><circle cx="10" cy="4" r="1.5"></circle><circle cx="16" cy="13" r="1.5"></circle></svg> Digitize chart image…</button>
+<button class="tool-btn" id="btnInterestCalc"><svg fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg> Bank interest calculator…</button>
 </div>
 </div>
       <div class="ribbon-panel" data-studio-panel="security">
@@ -607,6 +643,41 @@ body.dark .studio-tab.active{color:var(--pine);}
         <div id="readerEpubView" class="reader-epub-view" style="display:none;"></div>
         <div id="readerTocPanel" class="reader-toc-panel" style="display:none;"></div>
       </div>
+    </div>
+
+    <div id="helpStudio" class="studio-page" style="max-width:760px;">
+      <h2>Help &amp; guidelines</h2>
+      <p>Every tool lives under a Studio tab at the top. Most PDF tools need a file open first — that's why buttons look greyed out until you do. Here's what each Studio covers:</p>
+
+      <h3 style="margin-top:18px;font-size:14px;">📄 PDF Studio</h3>
+      <p><strong>Add pages:</strong> Open/merge PDFs, insert a PDF at a specific position. <strong>Arrange:</strong> duplicate, rotate, reverse, delete, crop, and remove blank pages (checks actual pixels, so it works on scans too). <strong>Extract &amp; split:</strong> pull selected pages into a new file, or split into many files by range or every N pages. <strong>Enhance:</strong> watermark, page numbers, Bates numbering, headers/footers, compress, and the metadata inspector.</p>
+
+      <h3 style="margin-top:18px;font-size:14px;">🖼 OCR &amp; Image Tools</h3>
+      <p>Extract text from a photo, make a scanned PDF genuinely searchable (a real invisible text layer, not just a label), pull a table out of an image into CSV/Excel, combine images into a PDF, or export PDF pages as images.</p>
+
+      <h3 style="margin-top:18px;font-size:14px;">🌍 Translation</h3>
+      <p>Translate pasted text or a whole PDF across 38 languages, side by side. This sends the text you choose (never the file itself) to a translation service — the only exception to "everything stays on your device" besides AI tools.</p>
+
+      <h3 style="margin-top:18px;font-size:14px;">🔄 Document Conversion</h3>
+      <p>PDF to and from Word, Excel, PowerPoint, CSV, HTML, JSON, XML, RTF, ODT/ODS/ODP, EPUB, and images. These carry over structure and text, not always exact original formatting — that's an honest limit of any browser-only conversion, not just this one.</p>
+
+      <h3 style="margin-top:18px;font-size:14px;">🤖 AI Assistant</h3>
+      <p>Summarize, rewrite, simplify, generate meeting minutes, review a contract, chat with a PDF, or generate a whole website — all using your own Anthropic or OpenAI API key, entered once and optionally remembered in your browser. There's no backend here to provide a shared key.</p>
+
+      <h3 style="margin-top:18px;font-size:14px;">📊 Spreadsheet Tools</h3>
+      <p>Turn a spreadsheet into a chart, digitize numbers out of a chart <em>image</em> (manual calibration — no software can reliably read an arbitrary chart automatically), or calculate period-by-period interest from a bank statement.</p>
+
+      <h3 style="margin-top:18px;font-size:14px;">🔐 Security</h3>
+      <p>Visual signature stamps, form fill &amp; flatten, and beta password protection (a less battle-tested library than the rest of the app — verify the output opens correctly). Cryptographic digital signatures aren't supported; that needs a certificate authority.</p>
+
+      <h3 style="margin-top:18px;font-size:14px;">📂 Batch Processing</h3>
+      <p>Run one operation — compress, OCR, convert, watermark, or merge — across many files at once, and download everything as a single .zip.</p>
+
+      <h3 style="margin-top:18px;font-size:14px;">📖 Reader</h3>
+      <p>A dedicated reading view for PDF and EPUB, separate from editing — page navigation, zoom, themes, and a table of contents for EPUB chapters.</p>
+
+      <h3 style="margin-top:18px;font-size:14px;">Stuck on something specific?</h3>
+      <p>Tap the <strong>?</strong> button in the bottom corner any time — type or speak a question and it'll try to answer directly, or point you to the right tool.</p>
     </div>
 
     <div id="aboutStudio" class="studio-page">
@@ -706,6 +777,20 @@ body.dark .studio-tab.active{color:var(--pine);}
 </div>
 
 <div class="toast-wrap" id="toastWrap"></div>
+
+<button id="floatingHelpBtn" aria-label="Help">?</button>
+<div id="floatingHelpPanel">
+  <div class="fh-head">
+    <span>Help</span>
+    <button id="floatingHelpClose" type="button" aria-label="Close help">✕</button>
+  </div>
+  <div id="floatingHelpMessages"></div>
+  <div class="fh-inputrow">
+    <button id="floatingHelpMic" type="button" aria-label="Ask by voice">🎙️</button>
+    <input type="text" id="floatingHelpInput" placeholder="Ask a question…">
+    <button id="floatingHelpSend" type="button">Send</button>
+  </div>
+</div>
 
 </div><!-- /#appView -->
 
@@ -883,8 +968,8 @@ function fmtBytes(n){
   return (n/1024/1024).toFixed(2) + ' MB';
 }
 function setToolsEnabled(on){
-  ['btnInsert','btnDuplicateSel','btnRotateSel','btnReverse','btnDeleteSel','btnCrop','btnExtract','btnSplit',
-   'btnWatermark','btnPageNum','btnHeaderFooter','btnFillForm','btnFlattenForm','btnSign','btnEncrypt',
+  ['btnInsert','btnDuplicateSel','btnRotateSel','btnReverse','btnDeleteSel','btnCrop','btnRemoveBlank','btnExtract','btnSplit',
+   'btnWatermark','btnPageNum','btnBates','btnHeaderFooter','btnFillForm','btnFlattenForm','btnSign','btnEncrypt',
    'btnCompress','btnMetadata','btnUndo','btnRedo','btnReset','btnOcrPdf',
    'btnPdfToWord','btnPdfToPptx','btnPdfToExcel','btnPdfToCsv','btnPdfToText','btnPdfToHtml','btnPdfToJson','btnPdfToImages',
    'btnPdfToXml','btnPdfToSvg','btnPdfToRtf','btnPdfToOdt','btnPdfToOds','btnPdfToOdp','btnPdfToEpub',
@@ -1299,9 +1384,16 @@ async function editMetadata({title, author, subject, keywords}){
 }
 async function getMetadata(){
   const doc = await PDFDocument.load(workingBytes);
+  const fmtDate = (d) => { try{ return d ? new Date(d).toLocaleString() : '—'; } catch{ return '—'; } };
   return {
     title: doc.getTitle() || '', author: doc.getAuthor() || '',
-    subject: doc.getSubject() || '', keywords: (doc.getKeywords() || '')
+    subject: doc.getSubject() || '', keywords: (doc.getKeywords() || ''),
+    creator: doc.getCreator() || '—',
+    producer: doc.getProducer() || '—',
+    creationDate: fmtDate(doc.getCreationDate ? doc.getCreationDate() : null),
+    modificationDate: fmtDate(doc.getModificationDate ? doc.getModificationDate() : null),
+    pageCount: doc.getPageCount(),
+    fileSize: fmtBytes(workingBytes.byteLength),
   };
 }
 
@@ -1473,6 +1565,18 @@ async function collectPdfRows(){
     });
   });
   return { rows, hasText };
+}
+async function collectRowsFromPdfBytes(bytes){
+  const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+  const rows = [];
+  for(let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const items = content.items.filter(it => typeof it.str === 'string')
+      .map(it => ({ str: it.str, x: it.transform[4], y: it.transform[5], width: it.width || 0 }));
+    groupIntoLines(items).forEach(l => rows.push(lineToCells(l.items, 9)));
+  }
+  return rows;
 }
 
 /* ---------- Conversion: PDF → Word (.docx) ----------
@@ -1972,7 +2076,56 @@ async function addHeaderFooter({ headerL, headerC, headerR, footerL, footerC, fo
   }, 'Header/footer added to all pages.');
 }
 
-/* ---------- Form fields ---------- */
+/* ---------- Bates numbering ----------
+   Standard legal/banking-document convention: a fixed prefix plus a
+   zero-padded sequential number on every page, unbroken across the
+   whole document (e.g. ABC-00000001, ABC-00000002, …). */
+async function addBatesNumbering({ prefix, startNum, digits, position, size }){
+  await withDoc(async (doc) => {
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    const pages = doc.getPages();
+    pages.forEach((page, i) => {
+      const { width } = page.getSize();
+      const label = prefix + String(startNum + i).padStart(digits, '0');
+      const textWidth = font.widthOfTextAtSize(label, size);
+      let x;
+      if(position === 'left') x = 30;
+      else if(position === 'center') x = width / 2 - textWidth / 2;
+      else x = width - 30 - textWidth;
+      page.drawText(label, { x, y: 18, size, font, color: rgb(0.2,0.2,0.2) });
+    });
+  }, `Bates numbers added: ${prefix}${String(startNum).padStart(digits,'0')} onward.`);
+}
+
+/* ---------- Remove blank pages ----------
+   Pixel-based, not text-based: a scanned blank page has no text layer
+   either way, so checking for empty extracted text would misfire on
+   every scanned page, blank or not. This renders each page at low
+   resolution and measures how much of it is near-white. */
+async function detectBlankPages(threshold){
+  threshold = threshold || 0.995;
+  const pdf = await pdfjsLib.getDocument({ data: workingBytes.slice() }).promise;
+  const blankIndices = [];
+  for(let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 0.4 });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(viewport.width));
+    canvas.height = Math.max(1, Math.round(viewport.height));
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let lightCount = 0;
+    const totalPixels = canvas.width * canvas.height;
+    for(let p = 0; p < data.length; p += 4){
+      if((data[p] + data[p+1] + data[p+2]) / 3 > 245) lightCount++;
+    }
+    if(totalPixels && (lightCount / totalPixels) >= threshold) blankIndices.push(i - 1);
+  }
+  return blankIndices;
+}
+
+
 async function getFormFieldsInfo(){
   const doc = await PDFDocument.load(workingBytes);
   let form;
@@ -3100,7 +3253,15 @@ $('btnCompress').addEventListener('click', () => {
 
 $('btnMetadata').addEventListener('click', async () => {
   const meta = await getMetadata();
-  openModal('Edit document metadata', `
+  openModal('Metadata inspector', `
+    <div style="background:var(--surface-2);border-radius:4px;padding:10px 12px;font-size:12.5px;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;">
+      <div><span style="color:var(--ink-soft);">Pages</span><br>${meta.pageCount}</div>
+      <div><span style="color:var(--ink-soft);">File size</span><br>${meta.fileSize}</div>
+      <div><span style="color:var(--ink-soft);">Created</span><br>${meta.creationDate}</div>
+      <div><span style="color:var(--ink-soft);">Modified</span><br>${meta.modificationDate}</div>
+      <div><span style="color:var(--ink-soft);">Creator app</span><br>${meta.creator}</div>
+      <div><span style="color:var(--ink-soft);">Producer</span><br>${meta.producer}</div>
+    </div>
     <div class="field"><label>Title</label><input type="text" id="mdTitle" value="${meta.title.replace(/"/g,'&quot;')}"></div>
     <div class="field"><label>Author</label><input type="text" id="mdAuthor" value="${meta.author.replace(/"/g,'&quot;')}"></div>
     <div class="field"><label>Subject</label><input type="text" id="mdSubject" value="${meta.subject.replace(/"/g,'&quot;')}"></div>
@@ -3459,6 +3620,43 @@ $('btnHeaderFooter').addEventListener('click', () => {
       size: parseInt(document.getElementById('hfSize').value) || 9,
     });
   });
+});
+
+$('btnBates').addEventListener('click', () => {
+  openModal('Bates numbering', `
+    <p class="hint" style="margin:0;">Standard legal/audit convention: a fixed prefix plus a sequential number on every page, e.g. <span class="mono">ABC-00000001</span>.</p>
+    <div class="field"><label>Prefix</label><input type="text" id="batesPrefix" placeholder="e.g. ABC-"></div>
+    <div class="field row">
+      <div><label>Starting number</label><input type="number" id="batesStart" min="0" value="1"></div>
+      <div><label>Digits (zero-padded)</label><input type="number" id="batesDigits" min="1" max="12" value="8"></div>
+    </div>
+    <div class="field row">
+      <div><label>Position</label><select id="batesPos"><option value="right">Bottom right</option><option value="center">Bottom center</option><option value="left">Bottom left</option></select></div>
+      <div><label>Font size</label><input type="number" id="batesSize" min="6" max="18" value="9"></div>
+    </div>
+  `, async () => {
+    const prefix = document.getElementById('batesPrefix').value || '';
+    const startNum = parseInt(document.getElementById('batesStart').value) || 1;
+    const digits = parseInt(document.getElementById('batesDigits').value) || 8;
+    const position = document.getElementById('batesPos').value;
+    const size = parseInt(document.getElementById('batesSize').value) || 9;
+    await addBatesNumbering({ prefix, startNum, digits, position, size });
+  });
+});
+
+$('btnRemoveBlank').addEventListener('click', async () => {
+  setStatus('Scanning for blank pages…'); showProgress(20);
+  try{
+    const blankIndices = await detectBlankPages();
+    if(!blankIndices.length){ toast('No blank pages found.', true); return; }
+    const rows = blankIndices.map((idx, i) => `<div class="field" style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="blank_${i}" checked style="width:auto;"><label style="margin:0;font-weight:400;" for="blank_${i}">Page ${idx + 1}</label></div>`).join('');
+    openModal('Blank pages found', rows + `<p class="hint">Checked pages will be deleted. Detection is pixel-based (mostly-white pages), so a page that's blank except for a faint header/footer might still be flagged — review before confirming.</p>`, async () => {
+      const toDelete = [];
+      blankIndices.forEach((idx, i) => { if(document.getElementById('blank_' + i)?.checked) toDelete.push(idx); });
+      if(toDelete.length) await deletePages(toDelete);
+    });
+  } catch(e){ console.error(e); toast('Could not scan for blank pages.', true); }
+  finally { showProgress(null); }
 });
 
 $('btnFillForm').addEventListener('click', async () => {
@@ -3833,7 +4031,7 @@ $('btnChatPdf').addEventListener('click', async () => {
     function addMsg(role, text){
       const div = document.createElement('div');
       div.style.cssText = role === 'user'
-        ? 'align-self:flex-end;background:var(--pine);color:#fff;padding:8px 10px;border-radius:8px;max-width:85%;font-size:13px;white-space:pre-wrap;'
+        ? 'align-self:flex-end;background:var(--pine-solid);color:#fff;padding:8px 10px;border-radius:8px;max-width:85%;font-size:13px;white-space:pre-wrap;'
         : 'align-self:flex-start;background:var(--surface);border:1px solid var(--line);padding:8px 10px;border-radius:8px;max-width:85%;font-size:13px;white-space:pre-wrap;';
       div.textContent = text;
       msgsEl.appendChild(div);
@@ -4175,8 +4373,9 @@ function setStudio(name){
   document.querySelectorAll('.ribbon-panel').forEach(p => p.classList.toggle('active', p.dataset.studioPanel === name));
   $('settingsStudio').classList.toggle('active', name === 'settings');
   $('aboutStudio').classList.toggle('active', name === 'about');
+  $('helpStudio').classList.toggle('active', name === 'help');
   $('readerStudio').classList.toggle('active', name === 'reader');
-  $('workspaceLayout').style.display = (name === 'settings' || name === 'about' || name === 'reader') ? 'none' : 'flex';
+  $('workspaceLayout').style.display = (name === 'settings' || name === 'about' || name === 'help' || name === 'reader') ? 'none' : 'flex';
   updateDashboardTilesVisibility();
 }
 document.querySelectorAll('.studio-tab').forEach(t => {
@@ -4216,6 +4415,94 @@ function computeStats(data){
   const min = n ? Math.min(...data) : 0;
   const max = n ? Math.max(...data) : 0;
   return { n, sum, avg, min, max };
+}
+
+/* ---------- Bank interest calculator ----------
+   Simple interest on the daily closing balance between statement
+   entries: balance × rate × days ÷ 365 for each stretch, summed — the
+   standard way savings-account interest is computed in practice. Dates
+   and amounts from real bank statements come in all sorts of formats,
+   so both parsers are deliberately permissive rather than assuming one
+   fixed layout. */
+function parseFlexibleDate(str){
+  str = String(str || '').trim();
+  if(!str) return null;
+  let m = str.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+  if(m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  m = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if(m){
+    let [, d, mo, y] = m;
+    if(y.length === 2) y = (parseInt(y) > 50 ? '19' : '20') + y;
+    const dNum = parseInt(d), moNum = parseInt(mo);
+    // if the first number can't be a month (>12), it's unambiguously DD/MM
+    return new Date(+y, moNum - 1, dNum);
+  }
+  const parsed = Date.parse(str);
+  return isNaN(parsed) ? null : new Date(parsed);
+}
+function parseFlexibleAmount(str){
+  if(typeof str === 'number') return str;
+  const s = String(str || '').trim();
+  if(!s) return null;
+  const negative = /^\(.*\)$/.test(s) || /-$/.test(s);
+  const cleaned = s.replace(/[^\d.]/g, '');
+  if(!cleaned) return null;
+  const v = parseFloat(cleaned);
+  return isNaN(v) ? null : (negative ? -v : v);
+}
+function computeInterestFromStatement(rows, dateIdx, balanceIdx, annualRatePct){
+  const entries = rows.map(r => ({ date: parseFlexibleDate(r[dateIdx]), balance: parseFlexibleAmount(r[balanceIdx]) }))
+    .filter(e => e.date && e.balance !== null && !isNaN(e.date.getTime()));
+  entries.sort((a, b) => a.date - b.date);
+  const breakdown = [];
+  let totalInterest = 0;
+  for(let i = 0; i < entries.length - 1; i++){
+    const days = Math.round((entries[i+1].date - entries[i].date) / 86400000);
+    if(days <= 0) continue;
+    const interest = entries[i].balance * (annualRatePct / 100) * days / 365;
+    totalInterest += interest;
+    breakdown.push({ from: entries[i].date, to: entries[i+1].date, days, balance: entries[i].balance, interest });
+  }
+  return { totalInterest, breakdown, entries };
+}
+function showInterestResult(result, rate){
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const fmt = d => d.toLocaleDateString();
+  const rows = result.breakdown.map(b => [fmt(b.from), fmt(b.to), b.days, b.balance.toFixed(2), b.interest.toFixed(2)]);
+  const preview = rows.slice(0, 25).map(r => `<tr>${r.map(c => `<td style="padding:4px 6px;border:1px solid var(--line);font-size:11px;white-space:nowrap;">${esc(String(c))}</td>`).join('')}</tr>`).join('');
+  openModal('Interest calculation', `
+    <div style="background:var(--surface-2);padding:12px;border-radius:4px;text-align:center;">
+      <div style="font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;">Total interest @ ${rate}% p.a.</div>
+      <div style="font-size:24px;font-weight:700;font-family:var(--font-mono);">${result.totalInterest.toFixed(2)}</div>
+    </div>
+    <div style="overflow:auto;max-height:280px;border:1px solid var(--line);border-radius:4px;">
+      <table style="border-collapse:collapse;width:100%;">
+        <tr><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">From</th><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">To</th><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">Days</th><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">Balance</th><th style="padding:4px 6px;border:1px solid var(--line);font-size:11px;">Interest</th></tr>
+        ${preview}
+      </table>
+    </div>
+    ${rows.length > 25 ? `<p class="hint">Showing the first 25 of ${rows.length} periods — the full breakdown is in the export.</p>` : ''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn ghost" id="intCsv" type="button">Download breakdown as CSV</button>
+      <button class="btn ghost" id="intXlsx" type="button">Download breakdown as Excel</button>
+    </div>
+    <p class="hint">Simple interest per period (balance × rate × days ÷ 365) — matches how most savings accounts compute interest on the daily closing balance. Not a substitute for your bank's own statement.</p>
+  `, async () => {});
+  $('modalConfirm').style.display = 'none';
+  $('modalCancel').textContent = 'Close';
+  setTimeout(() => {
+    const allRows = [['From','To','Days','Balance','Interest'], ...rows, ['','','','Total', result.totalInterest.toFixed(2)]];
+    document.getElementById('intCsv').addEventListener('click', () => {
+      downloadBlob(new Blob([allRows.map(r => r.map(toCsvValue).join(',')).join('\n')], {type:'text/csv'}), 'interest_breakdown.csv');
+    });
+    document.getElementById('intXlsx').addEventListener('click', async () => {
+      await loadLib('xlsx');
+      const ws = XLSX.utils.aoa_to_sheet(allRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Interest');
+      downloadBlob(new Blob([XLSX.write(wb, { bookType:'xlsx', type:'array' })], {type:'application/octet-stream'}), 'interest_breakdown.xlsx');
+    });
+  }, 0);
 }
 async function buildChartPdf(dataUrl, title, s){
   const doc = await PDFDocument.create();
@@ -4492,6 +4779,57 @@ $('btnChartDigitizer').addEventListener('click', () => {
   }, 0);
 });
 
+$('btnInterestCalc').addEventListener('click', () => {
+  openModal('Bank interest calculator', `
+    <div class="field"><label>Bank statement (PDF, Excel, or CSV)</label><input type="file" id="intFile" accept=".pdf,.xlsx,.xls,.csv"></div>
+    <div id="intColumnsArea"></div>
+    <div class="field"><label>Annual interest rate (%)</label><input type="number" id="intRate" step="0.01" value="4"></div>
+    <p class="hint">Calculates simple interest on the daily closing balance between transactions. Assumes the statement has a running balance column after each entry — most bank statements do.</p>
+  `, async () => {
+    const rows = window.__intRows;
+    if(!rows){ toast('Choose a statement file first.', true); return; }
+    const dateIdx = parseInt(document.getElementById('intDateCol').value);
+    const balIdx = parseInt(document.getElementById('intBalCol').value);
+    const rate = parseFloat(document.getElementById('intRate').value);
+    if(isNaN(rate)){ toast('Enter a valid interest rate.', true); return; }
+    const body = rows.slice(1);
+    const result = computeInterestFromStatement(body, dateIdx, balIdx, rate);
+    if(!result.breakdown.length){ toast('Could not compute — check the date/balance columns are right and there are at least 2 dated entries.', true); return; }
+    showInterestResult(result, rate);
+  });
+  setTimeout(() => {
+    document.getElementById('intFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      setStatus('Reading statement…'); showProgress(20);
+      try{
+        let rows;
+        const ext = (file.name.split('.').pop() || '').toLowerCase();
+        if(ext === 'pdf'){
+          const buf = new Uint8Array(await file.arrayBuffer());
+          rows = await collectRowsFromPdfBytes(buf);
+        } else {
+          await loadLib('xlsx');
+          const buf = await file.arrayBuffer();
+          const wb = XLSX.read(buf, { type:'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:false, defval:'' });
+        }
+        if(!rows.length){ toast('Could not read any data from that file.', true); return; }
+        window.__intRows = rows;
+        const headers = rows[0];
+        document.getElementById('intColumnsArea').innerHTML = `
+          <div class="field row">
+            <div><label>Date column</label><select id="intDateCol">${headers.map((h,i) => `<option value="${i}">${escapeXml(String(h))}</option>`).join('')}</select></div>
+            <div><label>Balance column</label><select id="intBalCol">${headers.map((h,i) => `<option value="${i}" ${i === headers.length-1 ? 'selected' : ''}>${escapeXml(String(h))}</option>`).join('')}</select></div>
+          </div>
+        `;
+      } catch(err){ console.error(err); toast('Could not read that file.', true); }
+      finally { showProgress(null); setStatus('Ready.'); }
+    });
+  }, 0);
+});
+
 /* ---------- Settings ---------- */
 $('btnClearAiKey').addEventListener('click', () => {
   localStorage.removeItem('pdfworkbench-ai-key');
@@ -4503,6 +4841,98 @@ $('btnClearAllData').addEventListener('click', () => {
     localStorage.clear();
     toast('Local settings cleared.');
   }
+});
+
+/* ---------- Floating help widget ----------
+   Answers common questions instantly via local keyword matching — no
+   API key needed, works offline. Falls back to AI (only if the person
+   has already saved a key elsewhere in the app) for anything outside
+   the FAQ; otherwise it points to the Help tab instead of guessing. */
+const HELP_FAQ = [
+  { q: ['merge','combine pdf'], a: 'PDF Studio → Add pages → "Open / Merge PDFs". Pick one file to start, or several at once to merge them in the order chosen.' },
+  { q: ['split'], a: 'PDF Studio → Extract & split → "Split into files…" — by page ranges or every N pages, downloads as a .zip.' },
+  { q: ['compress','reduce size','file size','smaller'], a: 'PDF Studio → Enhance → "Compress" — recompresses embedded JPEGs. Works best on scanned/photo-heavy PDFs; text-only PDFs won\u2019t shrink much.' },
+  { q: ['ocr','scan','searchable'], a: 'OCR Studio → "Make this PDF searchable…" — adds a real, invisible text layer so scans become searchable and copyable.' },
+  { q: ['translate'], a: 'Translation Studio → "Translate text…" or "Translate this PDF…". Covers 38 languages. This sends the text you choose (never the file) to a translation service.' },
+  { q: ['word','docx'], a: 'Conversion Studio → "PDF → Word (.docx)" — needs a real text layer; scanned PDFs need OCR first.' },
+  { q: ['excel','xlsx','spreadsheet'], a: 'Conversion Studio → "PDF → Excel" for tables inside a PDF, or Spreadsheet Studio → "Excel / CSV → Chart…" to visualize spreadsheet data you already have.' },
+  { q: ['password','protect','encrypt'], a: 'Security Studio → "Set password (beta)…" — real encryption, but a less battle-tested library than the rest of the app. Verify the output opens correctly before relying on it.' },
+  { q: ['sign','signature'], a: 'Security Studio → "Sign PDF…" draws a visual signature stamp — not a cryptographic digital signature, which needs a certificate authority no browser tool can provide.' },
+  { q: ['chat','ask question','summarize','summarise'], a: 'AI Studio has Summarize, Chat with this PDF, and more — needs your own Anthropic or OpenAI API key, since there\u2019s no backend here to supply one.' },
+  { q: ['batch'], a: 'Batch Studio → "Batch process files…" — run one operation across many PDFs at once, download as a single .zip.' },
+  { q: ['upload','privacy','safe','leave device','internet'], a: 'Everything runs in your browser — nothing is uploaded. The exceptions are Translate and AI tools, which send just the text you choose (never your files).' },
+  { q: ['reader','epub','read a book'], a: 'The Reader tab is a dedicated reading view for PDF and EPUB, separate from editing — with themes, zoom, and a table of contents for EPUB.' },
+  { q: ['dark mode','theme','contrast'], a: 'Toggle dark mode from the header icon. Settings also has High Contrast and Larger Text modes.' },
+  { q: ['undo','redo'], a: 'Ctrl/Cmd+Z to undo, Ctrl/Cmd+Y to redo — pinned at the left of the ribbon regardless of which tab you\u2019re on.' },
+  { q: ['form'], a: 'Security Studio → "Fill form fields…" reads a PDF\u2019s real form fields; "Flatten form" locks values in afterward.' },
+  { q: ['crop'], a: 'PDF Studio → Arrange → "Crop pages…" — trims the visible area without deleting content, so it\u2019s reversible with Undo.' },
+  { q: ['blank page'], a: 'PDF Studio → Arrange → "Remove blank pages…" checks actual page pixels, so it works on scanned blank pages too, not just text-empty ones.' },
+  { q: ['bates'], a: 'PDF Studio → Enhance → "Bates numbering…" — a prefix plus sequential zero-padded numbers across every page.' },
+  { q: ['interest','bank statement'], a: 'Spreadsheet Studio → "Bank interest calculator…" reads a statement (PDF, Excel, or CSV) and calculates period-by-period interest from the daily closing balance and the rate you give it.' },
+  { q: ['digitize','chart image','extract chart'], a: 'Spreadsheet Studio → "Digitize chart image…" — calibrate two known axis points, then click each data point; no software can read an arbitrary chart automatically.' },
+  { q: ['website','generate site'], a: 'AI Studio → "Generate a website…" — describe your site, get a complete single-file HTML site to preview, download, and deploy the same way as this app.' },
+  { q: ['recent','continue project'], a: 'The Dashboard tab shows Recent Files and lets you continue your last project — stored locally on this device via IndexedDB.' },
+];
+function matchFaq(question){
+  const q = question.toLowerCase();
+  let best = null, bestScore = 0;
+  for(const entry of HELP_FAQ){
+    let score = 0;
+    for(const kw of entry.q) if(q.includes(kw)) score++;
+    if(score > bestScore){ bestScore = score; best = entry; }
+  }
+  return bestScore > 0 ? best.a : null;
+}
+function fhAddMsg(role, text){
+  const div = document.createElement('div');
+  div.className = 'fh-msg ' + (role === 'user' ? 'user' : 'bot');
+  div.textContent = text;
+  $('floatingHelpMessages').appendChild(div);
+  $('floatingHelpMessages').scrollTop = $('floatingHelpMessages').scrollHeight;
+  return div;
+}
+async function fhHandleQuestion(question){
+  fhAddMsg('user', question);
+  const local = matchFaq(question);
+  if(local){ fhAddMsg('bot', local); return; }
+  const savedKey = localStorage.getItem('pdfworkbench-ai-key');
+  const savedProvider = localStorage.getItem('pdfworkbench-ai-provider') || 'anthropic';
+  if(savedKey){
+    const thinking = fhAddMsg('bot', '…thinking…');
+    try{
+      const prompt = `You are a help assistant for "DocuForge AI," a browser-based PDF/document toolkit with these tools organized into Studios: PDF (merge/split/rotate/crop/watermark/page numbers/Bates numbering/headers-footers/forms/compress/blank-page removal/metadata), OCR & Images (searchable PDFs, text/table extraction from images, images-to-PDF, QR reading), Translation (38 languages), Conversion (PDF to/from Word, Excel, PowerPoint, CSV, HTML, JSON, XML, RTF, ODT/ODS/ODP, EPUB, images), AI (summarize/rewrite/chat with PDF/meeting minutes/contract review/website generation, using the user's own API key), Spreadsheet (Excel/CSV to chart, chart digitizer, bank interest calculator), Security (visual signature stamps, form fill/flatten, beta password protection), Batch processing, and a Reader for PDF/EPUB. Everything runs in the browser except Translate and AI features, which send only chosen text (never files) to external providers. Answer the following question about how to use the app, concisely, in 2-3 sentences:\n\n${question}`;
+      const answer = await callAI(savedProvider, savedKey, '', prompt, 400);
+      thinking.textContent = answer;
+    } catch(e){ thinking.textContent = "I couldn't get an answer just now. Try the Help tab for a full guide, or check your AI API key in AI Studio."; }
+  } else {
+    fhAddMsg('bot', "I don't have a specific answer for that. Try the Help tab for a full guide — or add your AI API key in AI Studio and ask me again for open-ended questions.");
+  }
+}
+$('floatingHelpBtn').addEventListener('click', () => {
+  const panel = $('floatingHelpPanel');
+  panel.classList.toggle('show');
+  if(panel.classList.contains('show') && !$('floatingHelpMessages').children.length){
+    fhAddMsg('bot', "Hi! Ask me how to do something in DocuForge AI — or browse the Help tab for a full guide.");
+  }
+});
+$('floatingHelpClose').addEventListener('click', () => $('floatingHelpPanel').classList.remove('show'));
+function fhSend(){
+  const input = $('floatingHelpInput');
+  const q = input.value.trim();
+  if(!q) return;
+  input.value = '';
+  fhHandleQuestion(q);
+}
+$('floatingHelpSend').addEventListener('click', fhSend);
+$('floatingHelpInput').addEventListener('keydown', (e) => { if(e.key === 'Enter') fhSend(); });
+$('floatingHelpMic').addEventListener('click', () => {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition){ toast('Voice input isn\u2019t supported in this browser.', true); return; }
+  const rec = new SpeechRecognition();
+  rec.lang = 'en-US'; rec.interimResults = false;
+  rec.onresult = (e) => { $('floatingHelpInput').value = e.results[0][0].transcript; fhSend(); };
+  rec.onerror = () => toast('Could not capture voice input.', true);
+  try{ rec.start(); } catch(e){}
 });
 
 /* ---------- Init ---------- */
