@@ -5393,21 +5393,51 @@ function showChartResult(labels, data, type, seriesLabel){
     });
   }, 0);
 }
+function analyzeColumn(rows, colIdx){
+  const body = rows.slice(1);
+  const samples = [];
+  let numericCount = 0, nonEmptyCount = 0;
+  for(const r of body){
+    const v = r[colIdx];
+    if(v === undefined || v === '') continue;
+    nonEmptyCount++;
+    if(samples.length < 3) samples.push(String(v));
+    if(typeof v === 'number' || (v !== '' && !isNaN(parseFloat(v)) && isFinite(v))) numericCount++;
+  }
+  return { samples, pctNumeric: nonEmptyCount ? Math.round((numericCount / nonEmptyCount) * 100) : 0 };
+}
 $('btnExcelChart').addEventListener('click', () => {
   openModal('Excel / CSV → Chart', `
     <div class="field"><label>Spreadsheet file</label><input type="file" id="chartFile" accept=".xlsx,.xls,.csv"></div>
     <div id="chartColumnsArea"></div>
-    <p class="hint">Uses the first sheet. Pick which column holds labels and which holds the numbers to plot.</p>
+    <p class="hint">Uses the first sheet. Columns marked 🔢 look numeric — good Y-axis candidates. Sample values are shown so you can tell columns apart before picking.</p>
   `, async () => {
     const rows = window.__chartRows;
     if(!rows){ toast('Choose a spreadsheet file first.', true); return; }
     const xIdx = parseInt(document.getElementById('chartX').value);
     const yIdx = parseInt(document.getElementById('chartY').value);
-    const type = document.getElementById('chartType').value;
+    let type = document.getElementById('chartType').value;
     const body = rows.slice(1).filter(r => r[xIdx] !== undefined && r[xIdx] !== '');
     const labels = body.map(r => String(r[xIdx]));
-    const data = body.map(r => Number(r[yIdx]) || 0);
+    const rawData = body.map(r => { const v = parseFloat(r[yIdx]); return isNaN(v) ? null : v; });
+    const validCount = rawData.filter(v => v !== null).length;
     if(!labels.length){ toast('No data rows found.', true); return; }
+    if(validCount === 0){
+      toast('That Y-axis column doesn\u2019t contain usable numbers for every row — pick a column marked 🔢 in the list instead.', true);
+      return;
+    }
+    if(validCount < labels.length * 0.5){
+      toast(`Only ${validCount} of ${labels.length} rows in that column have numbers — the rest will show as 0. Check you picked the right column.`, false);
+    }
+    const data = rawData.map(v => v === null ? 0 : v);
+    if(data.every(v => v === 0)){
+      toast('Every value in that column is 0 — this is almost certainly the wrong column. Check the sample values shown in the Y-axis dropdown and pick one with real numbers.', true);
+      return;
+    }
+    if(type === 'pie' && labels.length > 20){
+      toast(`Pie charts don\u2019t work with ${labels.length} categories — showing as a bar chart instead.`, false);
+      type = 'bar';
+    }
     showChartResult(labels, data, type, String(rows[0][yIdx] ?? 'Value'));
   });
   setTimeout(() => {
@@ -5419,14 +5449,23 @@ $('btnExcelChart').addEventListener('click', () => {
         const buf = await file.arrayBuffer();
         const wb = XLSX.read(buf, { type:'array' });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:'' });
+        const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:false, defval:'' });
         if(!rows.length){ toast('Could not read any data from that file.', true); return; }
         window.__chartRows = rows;
         const headers = rows[0];
+        const colInfo = headers.map((h, i) => analyzeColumn(rows, i));
+        let bestYIdx = headers.length - 1, bestPct = -1;
+        colInfo.forEach((info, i) => { if(info.pctNumeric > bestPct){ bestPct = info.pctNumeric; bestYIdx = i; } });
+        const optLabel = (h, i) => {
+          const info = colInfo[i];
+          const marker = info.pctNumeric >= 70 ? '\ud83d\udd22 ' : '';
+          const sample = info.samples.length ? ` \u2014 e.g. ${info.samples.join(', ')}` : '';
+          return `${marker}${String(h)}${sample}`;
+        };
         document.getElementById('chartColumnsArea').innerHTML = `
           <div class="field row">
-            <div><label>X-axis (labels)</label><select id="chartX">${headers.map((h,i) => `<option value="${i}">${escapeXml(String(h))}</option>`).join('')}</select></div>
-            <div><label>Y-axis (values)</label><select id="chartY">${headers.map((h,i) => `<option value="${i}" ${i === headers.length-1 ? 'selected' : ''}>${escapeXml(String(h))}</option>`).join('')}</select></div>
+            <div><label>X-axis (labels)</label><select id="chartX">${headers.map((h,i) => `<option value="${i}">${escapeXml(optLabel(h,i))}</option>`).join('')}</select></div>
+            <div><label>Y-axis (values)</label><select id="chartY">${headers.map((h,i) => `<option value="${i}" ${i === bestYIdx ? 'selected' : ''}>${escapeXml(optLabel(h,i))}</option>`).join('')}</select></div>
           </div>
           <div class="field"><label>Chart type</label><select id="chartType"><option value="bar">Bar</option><option value="line">Line</option><option value="pie">Pie</option></select></div>
         `;
